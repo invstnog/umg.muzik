@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="google" content="notranslate">
+    <title>Universal Music VIP - Aggressive Wealth</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+        :root {
+            --cyan: #00e5ff;
+            --purple: #9d00ff;
+            --bg-dark: #080a12;
+            --text-color: #ffffff;
+            --gradient: linear-gradient(135deg, var(--purple), var(--cyan));
+            --gold-gradient: linear-gradient(135deg, #ffd700, #b8860b);
+            --danger-gradient: linear-gradient(135deg, #ff4444, #cc0000);
+            --success: #00ff88;
+            --gold: #ffd700;
+            --danger: #ff4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
+        html, body { direction: ltr !important; }
+        
+        body { background-color: #000; height: 100vh; height: 100dvh; display: flex; justify-content: center; overflow: hidden; color: white; }
+
+        .app-container {
+            width: 100%; max-width: 420px; height: 100%; background-color: var(--bg-dark);
+            position: relative; display: flex; flex-direction: column;
+            background-image: radial-gradient(circle at top, rgba(157, 0, 255, 0.15), transparent 60%), radial-gradient(circle at bottom, rgba(0, 229, 255, 0.1), transparent 60%);
+        }
+
+        .header { height: 70px; padding: 0 10px; display: flex; justify-content: space-between; align-items: center; background: rgba(20, 18, 10, 0.95); border-bottom: 1px solid rgba(255, 215, 0, 0.15); z-index: 100; flex-shrink: 0; }
+        .brand-title { color: var(--gold); font-weight: 900; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        .header-actions { display: flex; gap: 6px; align-items: center; }
+        .h-btn { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; font-size: 16px; border: 1px solid rgba(255,255,255,0.2); transition: 0.2s; position: relative; }
+        .h-btn:active { background: var(--purple); transform: scale(0.95); }
+        .notif-dot { position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; display: none; }
+
+        .page { flex: 1; overflow-y: auto; overflow-x: hidden; display: none; background: var(--bg-dark); position: relative; padding-bottom: 80px; }
+        .page.active { display: block; animation: fadeIn 0.3s; }
+        .page::-webkit-scrollbar { display: none; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .balance-card { margin: 20px; padding: 30px; background: linear-gradient(180deg, #1f1c0e 0%, #0d0d0d 100%); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 20px; text-align: center; box-shadow: 0 0 30px rgba(255, 215, 0, 0.1); position: relative; overflow: hidden; }
+        .balance-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,215,0,0.1), transparent); animation: rotate 10s linear infinite; }
+        .balance-amount { font-size: 40px; font-weight: 900; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; direction: ltr; position: relative; z-index: 1; }
+        
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px 10px; padding: 0 15px; }
+        .g-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; text-align: center; font-size: 12px; }
+        .g-icon { width: 58px; height: 58px; border-radius: 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: var(--cyan); font-size: 24px; transition: 0.3s; }
+        .g-item:hover .g-icon { border-color: var(--gold); color: var(--gold); transform: translateY(-3px); }
+        
+        .music-section { padding: 25px 15px; margin-top: 5px; }
+        .music-title { color: #fff; font-size: 16px; font-weight: bold; border-left: 4px solid var(--purple); padding-left: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .music-card { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 10px; margin-bottom: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+        .music-card.playing { background: linear-gradient(90deg, rgba(157, 0, 255, 0.15), transparent); border-color: var(--purple); }
+        .song-info { display: flex; align-items: center; gap: 12px; }
+        .song-img { width: 55px; height: 55px; border-radius: 12px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); }
+        .music-card.playing .song-img { border-color: var(--cyan); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(0, 229, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); } }
+        .play-btn { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; }
+        .music-card.playing .play-btn { background: var(--gradient); border: none; box-shadow: 0 0 10px var(--purple); }
+
+        .bank-list-vertical { display: flex; flex-direction: column; gap: 15px; padding: 20px; }
+        .bank-card { background: rgba(255,255,255,0.05); padding: 15px 20px; border-radius: 15px; display: flex; align-items: center; gap: 20px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s; }
+        .bank-card:active { border-color: var(--cyan); background: rgba(0,229,255,0.05); }
+        .bank-icon { font-size: 28px; color: var(--cyan); width: 40px; text-align: center; }
+        .bank-name { font-size: 14px; font-weight: bold; color: #fff; }
+
+        .plans-scroll { display: flex; overflow-x: auto; gap: 15px; padding: 10px 20px; scroll-behavior: smooth; }
+        .plans-scroll::-webkit-scrollbar { display: none; }
+        .plan-card { min-width: 160px; background: linear-gradient(180deg, #1f2235 0%, #141625 100%); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .plan-card.selected { border: 2px solid var(--cyan); box-shadow: 0 0 15px rgba(0,229,255,0.3); transform: scale(1.05); }
+        .plan-title { font-weight: 900; font-size: 20px; color: var(--cyan); margin-bottom: 5px; }
+        .plan-price { font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 10px; direction: ltr; }
+        .plan-detail { font-size: 11px; color: #aaa; margin-bottom: 2px; }
+
+        .form-group { padding: 0 20px; margin-bottom: 15px; }
+        .form-label { display: block; color: var(--cyan); font-size: 12px; margin-bottom: 5px; font-weight: bold; }
+        .form-input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; color: #fff; font-size: 14px; }
+        .upload-box { border: 2px dashed rgba(255,255,255,0.2); padding: 30px; text-align: center; border-radius: 15px; margin: 0 20px; cursor: pointer; color: #888; }
+        .info-box { background: rgba(255,255,255,0.05); padding: 15px; margin: 20px; border-radius: 10px; font-size: 12px; color: #ccc; }
+        .confirm-btn { background: var(--gradient); border: none; padding: 15px; width: calc(100% - 40px); margin: 20px; border-radius: 30px; color: #fff; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(157, 0, 255, 0.4); cursor: pointer; }
+
+        .speed-opt { background: rgba(255,255,255,0.05); padding: 15px; margin: 10px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .speed-badge { background: var(--purple); padding: 3px 8px; border-radius: 4px; font-size: 10px; }
+
+        .page-title-bar { padding: 15px 20px; background: #1a1d2e; display: flex; align-items: center; gap: 10px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.15); font-size: 16px; color: white; }
+        .list-row { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: space-between; cursor: pointer; color: #fff; }
+        .section-header { padding: 15px 20px 8px; color: var(--cyan); font-size: 13px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px; background: rgba(0,0,0,0.3); }
+        .notif-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; gap: 15px; align-items: center; }
+        
+        .mgr-card { background: #1a1d2e; margin: 12px 15px; padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .mgr-img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,0.2); }
+        .wa-btn { width: 45px; height: 45px; border-radius: 50%; background: #25D366; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
+
+        .btm-nav { position: absolute; bottom: 0; left: 0; width: 100%; height: 70px; background: #121420; border-top: 1px solid rgba(255,255,255,0.15); display: flex; justify-content: space-around; align-items: center; z-index: 200; }
+        .nav-link { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #888; text-decoration: none; font-size: 10px; }
+        .nav-link.active { color: var(--cyan); }
+        .nav-link i { font-size: 20px; }
+
+        .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; display: none; align-items: center; justify-content: center; animation: fadeIn 0.2s; }
+        .popup-box { background: #1e2130; width: 85%; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid var(--purple); box-shadow: 0 0 50px rgba(157, 0, 255, 0.3); }
+        .success-icon { font-size: 50px; color: var(--success); margin-bottom: 15px; }
+
+        .team-header { padding: 20px; position: relative; background: linear-gradient(to bottom, rgba(255, 215, 0, 0.1), transparent); overflow: hidden; }
+        .team-summary { display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; }
+        .team-stats-grid { display: flex; gap: 20px; margin-top: 15px; width: 100%; justify-content: center; }
+        .t-stat-box { background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); flex: 1; }
+        .t-stat-val { display: block; font-size: 18px; font-weight: 900; color: var(--gold); direction: ltr; }
+        .t-stat-lbl { font-size: 10px; color: #aaa; text-transform: uppercase; }
+
+        .invite-card { margin: 20px; padding: 20px; background: linear-gradient(135deg, #1a1d2e, #0d1017); border: 1px solid var(--gold); border-radius: 20px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .invite-link-area { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; margin: 15px 0; border: 1px dashed rgba(255,255,255,0.2); }
+        .invite-url { font-size: 12px; color: var(--cyan); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%; }
+        .invite-actions { display: flex; gap: 8px; justify-content: center; }
+        .i-btn { flex: 1; padding: 10px; border-radius: 10px; border: none; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; color: white; transition: 0.2s; }
+        .btn-copy { background: #333; }
+        .btn-qr { background: #444; }
+        .btn-share { background: var(--gradient); }
+
+        .solar-container { height: 350px; position: relative; display: flex; align-items: center; justify-content: center; margin: 20px 0; overflow: hidden; }
+        .center-user { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--gold); z-index: 10; background: #1a1d2e; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px var(--gold); }
+        .center-user i { font-size: 30px; color: var(--gold); }
+        .orbit { position: absolute; border: 1px dashed rgba(255,255,255,0.1); border-radius: 50%; }
+        .orbit-1 { width: 160px; height: 160px; animation: rotate 20s linear infinite; }
+        .orbit-2 { width: 260px; height: 260px; animation: rotate 35s linear infinite reverse; }
+        .orbit-3 { width: 360px; height: 360px; animation: rotate 50s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .member-node { position: absolute; width: 35px; height: 35px; border-radius: 50%; background: #fff; border: 2px solid var(--purple); overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center;}
+        
+        .filter-bar { display: flex; gap: 10px; padding: 0 20px; overflow-x: auto; margin-bottom: 20px; }
+        .f-pill { padding: 6px 15px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); font-size: 11px; white-space: nowrap; cursor: pointer; color: #aaa; }
+        .f-pill.active { background: var(--gold); color: #000; font-weight: bold; border-color: var(--gold); }
+
+        .mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px; }
+        .ms-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border-left: 3px solid var(--gold); }
+        .ms-val { display: block; font-weight: bold; font-size: 16px; }
+        .ms-lbl { font-size: 10px; color: #777; }
+
+        .aggressive-slogan { margin: 10px 20px; padding: 15px; border: 2px solid var(--gold); background: rgba(255,215,0,0.05); border-radius: 15px; text-align: center; color: var(--gold); font-weight: bold; font-size: 14px; position: relative; overflow: hidden; }
+        .aggressive-slogan::after { content: '$$$'; position: absolute; font-size: 80px; opacity: 0.1; top: -10px; right: 10px; color: var(--gold); }
+        
+        .mystery-box-area { margin: 20px; padding: 20px; background: var(--purple); border-radius: 20px; text-align: center; color: white; box-shadow: 0 0 20px rgba(157, 0, 255, 0.4); cursor: pointer; position: relative; overflow: hidden; }
+        .mystery-box-area:active { transform: scale(0.98); }
+        .mb-icon { font-size: 40px; margin-bottom: 10px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0);} 40% {transform: translateY(-10px);} 60% {transform: translateY(-5px);} }
+
+        .challenge-card { background: var(--danger-gradient); margin: 0 20px 20px; padding: 15px; border-radius: 15px; color: white; display: flex; align-items: center; gap: 15px; border: 2px solid #ffaaaa; }
+        .exclusive-agent-card { background: #111; border: 1px solid var(--cyan); margin: 0 20px 20px; padding: 15px; border-radius: 15px; display: flex; align-items: center; justify-content: space-between; }
+
+        .ref-table-container { margin: 0 20px 80px; background: #141625; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
+        .ref-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .ref-table th, .ref-table td { padding: 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ccc; }
+        .ref-table th { background: rgba(0,0,0,0.3); color: var(--gold); font-weight: bold; }
+        .ref-table tr:hover { background: rgba(255,255,255,0.05); }
+
+        .task-locked-view { text-align: center; padding: 60px 20px; }
+        .task-active-view { display: none; flex-direction: column; align-items: center; padding: 20px; }
+        .task-progress-box { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 20px 0; position: relative; }
+        .task-progress-fill { height: 100%; background: var(--gradient); width: 0%; transition: width 0.1s linear; border-radius: 3px; }
+        .stars-container { display: flex; justify-content: center; gap: 10px; margin: 15px 0; direction: ltr; }
+        .task-star { font-size: 35px; color: #555; cursor: pointer; transition: 0.2s; }
+        .task-star.active { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+        .task-counter-badge { background: rgba(0, 229, 255, 0.1); border: 1px solid var(--cyan); padding: 5px 15px; border-radius: 20px; color: var(--cyan); font-weight: bold; margin-bottom: 10px; font-size: 12px; }
+        .music-cd { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #333; background-size: cover; background-position: center; margin: 0 auto 15px; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .music-cd::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; background: #1a1d2e; border-radius: 50%; border: 2px solid #555; }
+        .music-cd.spin { animation: spin 3s linear infinite; border-color: var(--cyan); box-shadow: 0 0 20px var(--cyan); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .wallet-boxes { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+        .wallet-sq { background: linear-gradient(180deg, #1f2235, #141625); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 20px 10px; text-align: center; }
+        .wallet-sq-val { font-size: 18px; font-weight: bold; color: #fff; margin-top: 5px; direction: ltr; }
+        .wallet-sq-lbl { font-size: 11px; color: #aaa; }
+
+        .prof-top { text-align: center; padding: 30px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .prof-diamond-icon { font-size: 60px; text-shadow: 0 0 20px currentColor; margin: 10px 0; }
+        .prof-menu-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        .prof-menu-item:active { background: rgba(255,255,255,0.05); }
+
+        .assets-tabs { display: flex; background: #1a1d2e; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .asset-tab { flex: 1; padding: 15px; text-align: center; color: #aaa; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .asset-tab.active { color: var(--cyan); border-bottom: 3px solid var(--cyan); }
+        .asset-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 15px; margin: 15px; }
+        .asset-risk { padding: 3px 10px; border-radius: 15px; font-size: 10px; font-weight: bold; }
+        .risk-low { background: var(--success); color: #000; }
+        .risk-med { background: #ffaa00; color: #000; }
+        .risk-high { background: var(--danger); color: #fff; }
+
+        .game-grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 20px; }
+        .game-prize-box { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; height: 80px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--gold); text-align: center; font-size: 14px; transition: 0.2s; }
+        .game-play-btn { background: var(--gradient); color: white; cursor: pointer; font-size: 16px; border: 2px solid var(--purple); }
+
+        .gift-box-icon { font-size: 80px; color: var(--gold); text-shadow: 0 0 30px rgba(255, 215, 0, 0.4); animation: float 3s ease-in-out infinite; margin-bottom: 20px; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        .credit-ring { width: 150px; height: 150px; border-radius: 50%; border: 8px solid var(--success); display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; margin: 30px auto; }
+        
+        .salary-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+        .salary-table th, .salary-table td { padding: 12px 10px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .salary-table th { background: rgba(0, 229, 255, 0.1); color: var(--cyan); }
+        .salary-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+        /* Training Banner */
+        .training-banner { background: rgba(0, 229, 255, 0.1); border: 1px solid var(--cyan); padding: 15px; margin: 0 20px 15px; border-radius: 10px; font-size: 12px; color: #ccc; line-height: 1.6; text-align: right; direction: rtl; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <header class="header">
+            <div class="brand-title">UMG WEALTH</div>
+            <div class="header-actions">
+                <div class="h-btn" onclick="openPage('p-notif')">
+                    <i class="far fa-bell"></i>
+                    <div class="notif-dot" id="notif-badge"></div>
+                </div>
+                <div class="h-btn" onclick="openPage('p-lang')"><i class="fas fa-globe"></i></div>
+                <div class="h-btn" style="color:#26A17B; border-color:rgba(38,161,123,0.5)" onclick="openPage('p-currency')"><i class="fas fa-coins"></i></div>
+                <div class="h-btn" onclick="openPage('p-agents')"><i class="fas fa-user-tie"></i></div>
+                <div class="h-btn" style="color:#ff00ff; border-color:rgba(255,0,255,0.5)" onclick="openPage('p-salaries')"><i class="fas fa-hand-holding-dollar"></i></div>
+                <div class="h-btn" style="color:#25D366; border-color:rgba(37,211,102,0.5)" onclick="window.open('https://whatsapp.com/channel/0029Vb720Wc4inoxDRmYbH1I', '_blank')"><i class="fab fa-whatsapp"></i></div>
+            </div>
+        </header>
+
+        <div id="p-home" class="page active">
+            <div class="balance-card">
+                <div class="balance-amount" id="balance-display">$ 0.00</div>
+                <div style="color:#aaa; font-size:12px; margin-top:5px;" data-i18n="total_balance">Total Balance</div>
+            </div>
+            
+            <div class="grid">
+                <div class="g-item" onclick="openCharge()"><div class="g-icon"><i class="fas fa-plus"></i></div><span data-i18n="charge">Charge</span></div>
+                <div class="g-item" onclick="openWithdraw()"><div class="g-icon"><i class="fas fa-download"></i></div><span data-i18n="withdraw">Withdraw</span></div>
+                <div class="g-item" onclick="navToPage('p-team')"><div class="g-icon"><i class="fas fa-users"></i></div><span data-i18n="team">My Network</span></div>
+                <div class="g-item" onclick="navToPage('p-wallet')"><div class="g-icon"><i class="fas fa-university"></i></div><span data-i18n="bank">Bank</span></div>
+                <div class="g-item" onclick="navToPage('p-game')"><div class="g-icon"><i class="fas fa-dice"></i></div><span data-i18n="game">Game</span></div>
+                <div class="g-item" onclick="navToPage('p-assets')"><div class="g-icon"><i class="fas fa-briefcase"></i></div><span data-i18n="assets">Assets</span></div>
+                <div class="g-item" onclick="navToPage('p-gift')"><div class="g-icon"><i class="fas fa-gift"></i></div><span data-i18n="gift">Gift</span></div>
+                <div class="g-item" onclick="navToPage('p-vip-manage')"><div class="g-icon"><i class="fas fa-crown"></i></div><span data-i18n="support">VIP Management</span></div>
+            </div>
+            
+            <div class="music-section">
+                <div class="music-title"><i class="fas fa-music" style="color:var(--cyan)"></i> <span data-i18n="playlist">Top Artists Playlist</span></div>
+                <div id="music-list-container"></div>
+            </div>
+        </div>
+
+        <div id="p-salaries" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span>نظام رواتب الموظفين والوكلاء</span></div>
+            <div style="padding: 20px;">
+                <h3 style="color:var(--cyan); text-align:center; margin-bottom:15px;"><i class="fas fa-chart-line"></i> جدول ترقيات ورواتب الوكلاء</h3>
+                <p style="color:#aaa; font-size:12px; text-align:center; margin-bottom:20px;">حقق الشروط المطلوبة لترقية حسابك واحصل على راتب شهري ثابت ينزل في محفظتك!</p>
+                <table class="salary-table">
+                    <thead>
+                        <tr><th>رتبة الوكيل</th><th>الشرط المطلوب</th><th>الراتب الشهري ($)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>وكيل VIP 1<br><span style="font-size:10px; color:#aaa;">(مساعد متدرب)</span></td><td>تكوين فريق من 20 عضو (VIP 1)</td><td style="color:var(--success); font-weight:bold; font-size:14px;">$30</td></tr>
+                        <tr><td>وكيل VIP 2<br><span style="font-size:10px; color:#aaa;">(مشرف مساعدين)</span></td><td>تكوين فريق من 30 عضو (VIP 2)</td><td style="color:var(--success); font-weight:bold; font-size:14px;">$45</td></tr>
+                        <tr><td>وكيل VIP 3<br><span style="font-size:10px; color:#aaa;">(وكيل محلي)</span></td><td>تكوين فريق من 40 عضو (VIP 3)</td><td style="color:var(--success); font-weight:bold; font-size:14px;">$70</td></tr>
+                        <tr><td>وكيل VIP 4<br><span style="font-size:10px; color:#aaa;">(مدير منطقة)</span></td><td>تكوين فريق من 50 عضو (VIP 4)</td><td style="color:var(--success); font-weight:bold; font-size:14px;">$100</td></tr>
+                        <tr><td>وكيل VIP 5<br><span style="font-size:10px; color:#aaa;">(مدير إقليمي)</span></td><td>تكوين فريق من 60 عضو (VIP 5)</td><td style="color:var(--success); font-weight:bold; font-size:14px;">$200</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="p-tasks" class="page">
+            <div class="page-title-bar" style="justify-content: center;"><span>صفحة المهام (تقييم الأغاني)</span></div>
+            
+            <div id="tasks-locked-view" class="task-locked-view">
+                <i class="fas fa-lock" style="font-size: 60px; color: var(--danger); margin-bottom: 20px;"></i>
+                <h2 style="color: white; margin-bottom: 10px;" id="tasks-lock-title">انتهت الفترة التدريبية</h2>
+                <p style="color: #aaa; font-size: 14px;" id="tasks-lock-desc">لقد أكملت الـ 3 أيام التدريبية المجانية. يرجى تفعيل خطة VIP للاستمرار في الربح.</p>
+                <button class="confirm-btn" onclick="openCharge()">شحن وتفعيل خطة الآن</button>
+            </div>
+
+            <div id="tasks-active-view" class="task-active-view">
+                <div id="training-banner" class="training-banner">
+                    <h3 style="color: var(--cyan); margin-bottom: 5px;"><i class="fas fa-info-circle"></i> فترة التدريب المجانية</h3>
+                    هذه الصفحة مخصصة لتدريبك على كيفية تقييم الأغاني. أكمل المهام المجانية للتعرف على النظام. عند تفعيلك لعضوية VIP، سيختفي هذا الشرح وتتحول الصفحة إلى نظام المهام الرسمي الخاص بباقتك وتتضاعف أرباحك.
+                </div>
+
+                <div class="task-counter-badge" id="task-counter-txt">المهام المتبقية: 0 / 0</div>
+                
+                <div style="background: #1a1d2e; border-radius: 20px; padding: 30px; width: 100%; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+                    <div class="music-cd" id="task-cd"></div>
+                    <h3 id="task-song-name" style="color: white; margin-bottom: 5px; direction: ltr;">Track 1</h3>
+                    <p style="color: #aaa; font-size: 11px;">استمع لمدة 15 ثانية فقط لتقييم المقطع</p>
+                    
+                    <div class="task-progress-box">
+                        <div class="task-progress-fill" id="task-progress-bar"></div>
+                    </div>
+                    
+                    <div class="play-btn" style="width: 60px; height: 60px; font-size: 24px; margin: 0 auto; background: var(--gradient); border: none; box-shadow: 0 0 15px var(--purple);" id="btn-play-task" onclick="startTaskMusic()">
+                        <i class="fas fa-play" style="margin-left: 5px;"></i>
+                    </div>
+                </div>
+                <div style="color: #777; font-size: 11px; margin-top: 20px;">
+                    <i class="fas fa-sync fa-spin"></i> تتغير الأغاني يومياً الساعة 11:57 مساءً
+                </div>
+            </div>
+        </div>
+
+        <div id="p-wallet" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span>المحفظة الاستثمارية</span></div>
+            
+            <div class="wallet-boxes">
+                <div class="wallet-sq" style="border-color: #555;">
+                    <i class="fas fa-lock" style="font-size: 24px; color: #888;"></i>
+                    <div class="wallet-sq-val" id="w-capital-locked" style="color:#ff4444;">$0.00</div>
+                    <div class="wallet-sq-lbl">رأس المال (مقفل)</div>
+                </div>
+                <div class="wallet-sq" style="border-color: var(--cyan);">
+                    <i class="fas fa-music" style="font-size: 24px; color: var(--cyan);"></i>
+                    <div class="wallet-sq-val" id="w-tasks-profit">$0.00</div>
+                    <div class="wallet-sq-lbl">أرباح المهام</div>
+                </div>
+                <div class="wallet-sq" style="border-color: var(--gold);">
+                    <i class="fas fa-gift" style="font-size: 24px; color: var(--gold);"></i>
+                    <div class="wallet-sq-val" id="w-rewards-profit">$0.00</div>
+                    <div class="wallet-sq-lbl">أرباح المكافآت</div>
+                </div>
+                <div class="wallet-sq" style="border-color: var(--success);">
+                    <i class="fas fa-users" style="font-size: 24px; color: var(--success);"></i>
+                    <div class="wallet-sq-val" id="w-ref-profit">$0.00</div>
+                    <div class="wallet-sq-lbl">أرباح الإحالات</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="p-profile" class="page">
+            <div class="prof-top">
+                <h2 style="color: white; font-weight: 900; letter-spacing: 2px;">UNIVERSAL</h2>
+                <i class="fas fa-gem prof-diamond-icon" id="prof-diamond" style="color: #555;"></i>
+                <div style="background: rgba(0,0,0,0.5); display: inline-block; padding: 2px 10px; border-radius: 10px; border: 1px solid #555; font-size: 12px; margin-bottom: 10px;" id="prof-plan-badge">V0</div>
+                <h3 style="color: white;" id="prof-user-name">عضو المنصة</h3>
+                <p style="color: #aaa; font-size: 12px; direction: ltr;">ID: <span id="prof-user-id">00000000</span></p>
+                <p style="color: #aaa; font-size: 12px; margin-top: 2px;">🌍 Global</p>
+            </div>
+            
+            <div class="prof-menu-item" onclick="fetchMyRecords(); navToPage('p-records')">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-file-invoice-dollar" style="color: var(--cyan); width: 20px; font-size: 18px;"></i>
+                    <span style="color: white; font-weight: bold;">السجلات المالية</span>
+                </div>
+                <i class="fas fa-chevron-left" style="color: #555; font-size: 12px;"></i>
+            </div>
+            <div class="prof-menu-item" onclick="navToPage('p-credit')">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-shield-alt" style="color: var(--success); width: 20px; font-size: 18px;"></i>
+                    <span style="color: white; font-weight: bold;">نقاط الائتمان</span>
+                </div>
+                <i class="fas fa-chevron-left" style="color: #555; font-size: 12px;"></i>
+            </div>
+            <div class="prof-menu-item" onclick="navToPage('p-dl-android')">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fab fa-android" style="color: #3ddc84; width: 20px; font-size: 18px;"></i>
+                    <span style="color: white; font-weight: bold;">تحميل نظام Android</span>
+                </div>
+                <i class="fas fa-chevron-left" style="color: #555; font-size: 12px;"></i>
+            </div>
+            <div class="prof-menu-item" onclick="navToPage('p-dl-ios')">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fab fa-apple" style="color: #aaa; width: 20px; font-size: 18px;"></i>
+                    <span style="color: white; font-weight: bold;">تحميل نظام iOS</span>
+                </div>
+                <i class="fas fa-chevron-left" style="color: #555; font-size: 12px;"></i>
+            </div>
+            <div class="prof-menu-item" onclick="navToPage('p-about')">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-info-circle" style="color: var(--gold); width: 20px; font-size: 18px;"></i>
+                    <span style="color: white; font-weight: bold;">من نحن</span>
+                </div>
+                <i class="fas fa-chevron-left" style="color: #555; font-size: 12px;"></i>
+            </div>
+            <div class="prof-menu-item" onclick="executeLogout()" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-sign-out-alt" style="color: var(--danger); width: 20px; font-size: 18px;"></i>
+                    <span style="color: var(--danger); font-weight: bold;">تسجيل الخروج</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="p-about" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="navToPage('p-profile')"></i><span>من نحن</span></div>
+            <div style="text-align: center; padding: 30px 20px;">
+                <h2 style="color: var(--cyan); margin-bottom: 20px; font-weight: 900;">Universal Music Group</h2>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Universal_Music_Group_logo.svg/1200px-Universal_Music_Group_logo.svg.png" style="width: 150px; background: white; padding: 10px; border-radius: 10px; margin-bottom: 20px;" loading="lazy">
+                <p style="color: #ccc; font-size: 14px; line-height: 1.8; text-align: right; direction: rtl; margin-bottom: 20px;">
+                    نحن منصة تابعة لمجموعة يونيفرسال ميوزيك (Universal Music Group)، وهي أكبر شركة موسيقى في العالم. 
+                    هدف منصتنا هو دعم الفنانين الأجانب وزيادة تفاعل المستمعين مع مقاطعهم الموسيقية من خلال نظام تقييم احترافي يعود بالربح المادي على المشتركين لدينا.
+                </p>
+                <button class="confirm-btn" onclick="window.open('https://www.universalmusic.com/', '_blank')">زيارة موقعنا الرسمي</button>
+            </div>
+        </div>
+
+        <div id="p-notif" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span data-i18n="notif">Notifications</span></div>
+            <div id="notif-list-container">
+                <div style="padding:50px; text-align:center; color:#666;">
+                    <i class="fas fa-bell-slash" style="font-size:40px; margin-bottom:15px;"></i>
+                    <p>No new notifications</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="p-records" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="navToPage('p-profile')"></i><span>السجلات المالية</span></div>
+            <div id="records-list">
+                <div style="text-align: center; padding: 20px; color: #888;">جاري تحميل السجلات...</div>
+            </div>
+        </div>
+
+        <div id="p-credit" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="navToPage('p-profile')"></i><span>نقاط الائتمان</span></div>
+            <div class="credit-ring" id="credit-score">90%</div>
+            <div class="info-box" style="text-align: right; direction: rtl; line-height: 1.8;">
+                نظام حماية المنصة:<br>
+                - تبدأ نقاطك بـ <b>90%</b>.<br>
+                - إذا قمت بتكوين فريق خلال <b>9 أيام</b>، ترتفع نقاطك يومياً نقطة واحدة لتصل لـ 100%.<br>
+                - في حال لم تكون فريقاً، ستبدأ بالنزول بعد 3 أيام حتى تصل لـ <b>45%</b>.<br>
+                - عند الوصول لـ 45% تقل المهام ويتم قفل السحب لحين تكوين فريق لرفع النقاط.<br>
+                (تتم إدارة هذه العملية برمجياً بالكامل).
+            </div>
+        </div>
+
+        <div id="p-dl-android" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="navToPage('p-profile')"></i><span>تحميل Android</span></div>
+            <div style="text-align: center; padding: 50px 20px;">
+                <i class="fab fa-google-play" style="font-size: 80px; color: #3ddc84; margin-bottom: 20px;"></i>
+                <h3 style="color: white; margin-bottom: 15px;">جاري تحويلك إلى سوق بلي...</h3>
+                <button class="confirm-btn" onclick="window.open('https://play.google.com/store/apps/details?id=com.universal.blocked', '_blank')">الذهاب للمتجر</button>
+            </div>
+        </div>
+
+        <div id="p-dl-ios" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="navToPage('p-profile')"></i><span>تحميل iOS</span></div>
+            <div style="text-align: center; padding: 50px 20px;">
+                <i class="fab fa-app-store-ios" style="font-size: 80px; color: #aaa; margin-bottom: 20px;"></i>
+                <h3 style="color: white; margin-bottom: 15px;">جاري تحويلك إلى App Store...</h3>
+                <button class="confirm-btn" onclick="window.open('https://www.apple.com/app-store/', '_blank')">الذهاب للمتجر</button>
+            </div>
+        </div>
+
+        <div id="p-vip-manage" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span data-i18n="support">VIP Management</span></div>
+            <div style="text-align: center; padding: 20px;">
+                <h2 style="color: var(--cyan); font-weight: 900; margin-bottom: 10px;">إدارة الـ VIP</h2>
+                <p style="color: #aaa; font-size: 12px; margin-bottom: 20px;">اختر خطة للترقية وابدأ بزيادة أرباحك اليومية. كل الخطط صالحة لمدة 365 يوماً.</p>
+                <div id="vip-vertical-list" style="text-align: right; direction: rtl;"></div>
+            </div>
+        </div>
+
+        <div id="p-assets" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span>إدارة الأصول البنكية</span></div>
+            
+            <div class="assets-tabs">
+                <div class="asset-tab active" id="tab-all" onclick="toggleAssets('all')">البنوك المتاحة</div>
+                <div class="asset-tab" id="tab-my" onclick="toggleAssets('my')">استثماراتي</div>
+            </div>
+
+            <div id="view-all-assets" style="display: block;">
+                <div id="assets-list-container"></div>
+            </div>
+
+            <div id="view-my-assets" style="display: none; padding-top: 20px;">
+                <div style="text-align: center; color: #666; padding: 40px;">لا توجد استثمارات نشطة حالياً</div>
+            </div>
+        </div>
+
+        <div id="p-game" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span>لعبة الحظ</span></div>
+            <div style="text-align: center; padding: 20px;">
+                <h2 style="color: var(--cyan); margin-bottom: 10px;">عجلة الجوائز</h2>
+                <div style="background: rgba(255,51,102,0.1); border: 1px solid var(--danger); display: inline-block; padding: 5px 20px; border-radius: 20px; color: white; margin-bottom: 20px;">
+                    المحاولات المتبقية: <span style="font-weight: bold; color: var(--danger);" id="game-attempts-count">1</span>
+                </div>
+                
+                <div class="game-grid-container" id="game-grid">
+                    <div class="game-prize-box">$1</div>
+                    <div class="game-prize-box">$25</div>
+                    <div class="game-prize-box">حظ أوفر</div>
+                    <div class="game-prize-box">$60</div>
+                    <div class="game-prize-box game-play-btn" onclick="playLuckyGame()" id="spin-btn">العب</div>
+                    <div class="game-prize-box">$90</div>
+                    <div class="game-prize-box">$10</div>
+                    <div class="game-prize-box">$100</div>
+                    <div class="game-prize-box">$150</div>
+                </div>
+                <div style="font-size: 11px; color: #aaa; margin-top: 15px;">يوجد أيضاً فرصة للربح بالجائزة الكبرى $200!</div>
+            </div>
+        </div>
+
+        <div id="p-gift" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span>مركز الهدايا</span></div>
+            <div style="text-align: center; padding: 30px 20px;">
+                <i class="fas fa-box-open gift-box-icon"></i>
+                <h2 style="color: white; margin-bottom: 10px;">اربح مع المنصة!</h2>
+                
+                <div class="info-box" style="text-align: right; direction: rtl; line-height: 1.8; border-color: var(--cyan); border-width: 1px; border-style: dashed;">
+                    <h3 style="color: var(--gold); text-align: center; margin-bottom: 10px;">مهمة النمو 🚀</h3>
+                    قم بدعوة <b>5 أصدقاء</b> لتفعيل خطة VIP واحصل فوراً على هدية نقدية بقيمة <span style="color: var(--success); font-weight: bold;">$50</span> بالإضافة إلى تفعيل خطة <b>V1 مجاناً</b> كهدية من الإدارة!<br><br>
+                    <div style="text-align: center;"><button class="confirm-btn" style="margin: 0; width: auto; padding: 10px 30px;" onclick="navToPage('p-team')">ابدأ الدعوة الآن</button></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="p-team" class="page">
+            <div class="team-header">
+                <div class="team-summary">
+                    <h2 style="font-weight: 900; letter-spacing: 1px; color: var(--gold);" data-i18n="success_circle">WEALTH CIRCLE</h2>
+                    <div class="team-stats-grid">
+                        <div class="t-stat-box">
+                            <span class="t-stat-val" id="team-members-count">0</span> <span class="t-stat-lbl" data-i18n="members">Members</span>
+                        </div>
+                        <div class="t-stat-box">
+                            <span class="t-stat-val" id="team-prof-disp">$0.00</span> <span class="t-stat-lbl" data-i18n="team_profit">Team Profit</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="aggressive-slogan">
+                "لماذا تعمل من أجل المال؟ اجعل المال يعمل من أجلك في UMG"
+            </div>
+            <div class="aggressive-slogan" style="border-color: var(--cyan); color: var(--cyan);">
+                "UMG: المنصة التي لا تعرف المستحيل.. اربح 500$ بضغطة واحدة"
+            </div>
+
+            <div class="invite-card">
+                <div style="font-size: 14px; font-weight: bold; color: var(--cyan);" data-i18n="invite_link">Your Invitation Link</div>
+                <div class="invite-link-area">
+                    <span class="invite-url" id="user-ref-link" style="direction: ltr;">Loading...</span>
+                    <i class="fas fa-qrcode" style="color: white; font-size: 18px;"></i>
+                </div>
+                <div class="invite-actions">
+                    <button class="i-btn btn-copy" onclick="copyRefLink()"><i class="fas fa-copy"></i> <span data-i18n="copy">Copy</span></button>
+                    <button class="i-btn btn-qr"><i class="fas fa-bolt"></i> <span data-i18n="qr">QR</span></button>
+                    <button class="i-btn btn-share"><i class="fab fa-whatsapp"></i> <span data-i18n="share">Share</span></button>
+                </div>
+            </div>
+
+            <div class="solar-container">
+                <div class="center-user">
+                    <i class="fas fa-vault" style="font-size:25px;"></i>
+                </div>
+                <div class="orbit orbit-1"></div>
+                <div class="orbit orbit-2"></div>
+                <div class="orbit orbit-3"></div>
+            </div>
+
+            <div class="mystery-box-area" onclick="openMysteryBox()">
+                <i class="fas fa-box-open mb-icon"></i>
+                <h3>صندوق المفاجآت</h3>
+                <p style="font-size:11px; opacity:0.8;">ادعُ 3 أشخاص وافتح الصندوق لتربح حتى $10</p>
+            </div>
+
+            <div class="challenge-card">
+                <i class="fas fa-fire" style="font-size:30px; color:gold;"></i>
+                <div>
+                    <h3 style="font-size:14px; font-weight:900;">تحدي الـ 24 ساعة 🔥</h3>
+                    <p style="font-size:11px;">احصل على إيداعين VIP 4 في يوم واحد واربح ضعف العمولة (30$ بدلاً من 15$)</p>
+                </div>
+            </div>
+
+            <div class="exclusive-agent-card">
+                <div>
+                    <h3 style="color:var(--cyan); font-size:14px;">الوكيل الحصري 🌟</h3>
+                    <p style="color:#aaa; font-size:10px;">خصم 5% للمسجلين وعمولات أعلى</p>
+                </div>
+                <i class="fas fa-user-shield" style="font-size:25px; color:var(--cyan);"></i>
+            </div>
+
+            <div class="ref-table-container">
+                <div style="padding:10px; text-align:center; color:white; font-weight:bold; border-bottom:1px solid rgba(255,255,255,0.1); background:var(--gold-gradient); color:black;">
+                    <i class="fas fa-sack-dollar"></i> باقة الصديق (أرباح فورية)
+                </div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th>الباقة</th>
+                            <th>كاش فوري ($)</th>
+                            <th>رصيد مهام ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>V1 - Starter</td><td style="color:var(--success);">$1.5</td><td style="color:var(--cyan);">$0.5</td></tr>
+                        <tr><td>V2 - Basic</td><td style="color:var(--success);">$3.5</td><td style="color:var(--cyan);">$1.0</td></tr>
+                        <tr><td>V3 - Silver</td><td style="color:var(--success);">$7.0</td><td style="color:var(--cyan);">$2.0</td></tr>
+                        <tr><td>V4 - Gold</td><td style="color:var(--success);">$15.0</td><td style="color:var(--cyan);">$5.0</td></tr>
+                        <tr><td>V5 - Platinum</td><td style="color:var(--success);">$30.0</td><td style="color:var(--cyan);">$10.0</td></tr>
+                        <tr><td>V6 - Diamond</td><td style="color:var(--success);">$60.0</td><td style="color:var(--cyan);">$20.0</td></tr>
+                        <tr><td>V7 - Elite</td><td style="color:var(--success);">$120.0</td><td style="color:var(--cyan);">$40.0</td></tr>
+                        <tr><td>V8 - VIP</td><td style="color:var(--success);">$250.0</td><td style="color:var(--cyan);">$50.0</td></tr>
+                        <tr><td>V9 - Royal</td><td style="color:var(--success);">$500.0</td><td style="color:var(--cyan);">$100.0</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mini-stats">
+                <div class="ms-box"><span class="ms-val" id="today-invites-count">0</span><span class="ms-lbl" data-i18n="today_invites">Today Invites</span></div>
+                <div class="ms-box"><span class="ms-val" style="color:var(--success)" id="today-profit-box">$0.00</span><span class="ms-lbl" data-i18n="today_profit">Today Profit</span></div>
+                <div class="ms-box" style="margin-top:10px"><span class="ms-val" id="week-profit-box">$0.00</span><span class="ms-lbl" data-i18n="week_profit">Week Profit</span></div>
+                <div class="ms-box" style="margin-top:10px"><span class="ms-val" id="best-member-name">--</span><span class="ms-lbl" data-i18n="best_member">Best Member</span></div>
+            </div>
+        </div>
+
+        <div id="p-charge-methods" class="page"><div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span data-i18n="select_payment">Select Payment</span></div><div class="bank-list-vertical" id="charge-bank-list"></div></div>
+        
+        <div id="p-charge-final" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="openCharge()"></i><span data-i18n="charge_details">Charge Details</span></div>
+            <div class="info-box"><p><span style="color:var(--cyan)" data-i18n="bank_name">Bank Name</span>: <span id="c-bank-name" style="color:#fff; font-weight:bold"></span></p><p><span style="color:var(--cyan)" data-i18n="acc_name">Account Name</span>: <span id="c-acc-name" style="color:#fff; font-weight:bold"></span></p><p><span style="color:var(--cyan)" data-i18n="acc_num">Account/Wallet</span>: <span id="c-acc-num" style="color:#fff; font-weight:bold; word-break:break-all;"></span></p></div>
+            <div class="section-header" data-i18n="select_plan">Select VIP Plan</div>
+            <div class="plans-scroll" id="plans-container"></div>
+            <div class="section-header" data-i18n="proof">Payment Proof</div>
+            
+            <div class="upload-box" onclick="document.getElementById('file-up').click()">
+                <i class="fas fa-camera" id="upload-icon" style="font-size:30px; margin-bottom:10px;"></i>
+                <div id="upload-text" data-i18n="upload_receipt">Upload Receipt</div>
+                <img id="receipt-preview" style="display:none; width:100%; border-radius:10px; margin-top:10px; object-fit:contain; max-height: 200px;"/>
+                <input type="file" id="file-up" accept="image/*" hidden onchange="handleFileUpload(event)">
+            </div>
+            
+            <div class="info-box"><div style="margin-bottom:5px; color:var(--cyan); font-weight:bold" data-i18n="terms">Terms</div>1. Make sure the amount matches.<br>2. Upload clear receipt.<br>3. Wait for approval.</div>
+            <button class="confirm-btn" onclick="confirmCharge()" data-i18n="confirm_charge">Confirm Charge</button>
+        </div>
+        
+        <div id="p-withdraw-methods" class="page"><div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span data-i18n="select_withdraw">Select Withdraw</span></div><div class="bank-list-vertical" id="withdraw-bank-list"></div></div>
+        <div id="p-withdraw-speed" class="page"><div class="page-title-bar"><i class="fas fa-arrow-left" onclick="openWithdraw()"></i><span data-i18n="commission">Commission</span></div><div id="speed-list"></div></div>
+        
+        <div id="p-withdraw-final" class="page">
+            <div class="page-title-bar"><i class="fas fa-arrow-left" onclick="openPage('p-withdraw-speed')"></i><span data-i18n="withdraw_req">Withdraw Request</span></div>
+            <div class="form-group" style="margin-top:20px;"><label class="form-label" data-i18n="your_name">Your Name</label><input type="text" id="w-name" class="form-input" placeholder="..."></div>
+            <div class="form-group"><label class="form-label" data-i18n="your_card">Card/Wallet Number</label><input type="text" id="w-wallet-num" class="form-input" placeholder="..."></div>
+            <div class="form-group"><label class="form-label" id="label-w-amount" data-i18n="amount">Amount</label><input type="number" class="form-input" id="w-amount" oninput="calcWithdraw()" placeholder="0.00"></div>
+            <div class="info-box"><p data-i18n="principal_locked" style="color:#ff4444; font-weight:bold;">تنبيه: لا يمكنك سحب مبلغ رأس المال (سعر الخطة). السحب متاح فقط للأرباح (المهام، الإحالات، المكافآت).</p><p><span data-i18n="fee">Fee</span>: <span id="w-fee-display">0%</span></p><p><span data-i18n="receive">You Receive</span>: <span id="w-final-display" style="color:var(--success); font-weight:bold">0.00</span></p></div>
+            <button class="confirm-btn" onclick="confirmWithdraw()" data-i18n="confirm_withdraw">Confirm Withdraw</button>
+        </div>
+        
+        <div id="p-lang" class="page"><div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span data-i18n="lang">Language</span></div><div class="list-row" onclick="setLang('en')"><span>🇺🇸 English</span> <i class="fas fa-check" style="color:var(--cyan)"></i></div><div class="list-row" onclick="setLang('ar')"><span>🇸🇦 العربية</span></div></div>
+        <div id="p-currency" class="page"><div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span data-i18n="currency">Currency</span></div><div id="currency-list"></div></div>
+        <div id="p-agents" class="page"><div class="page-title-bar"><i class="fas fa-arrow-left" onclick="goHome()"></i><span data-i18n="agents">Agents</span></div><div id="agents-list"></div></div>
+
+        <div id="popup-rating" class="popup">
+            <div class="popup-box">
+                <h3 style="color: white;">تقييم الأغنية</h3>
+                <div class="stars-container">
+                    <i class="fas fa-star task-star" onclick="selectStar(1)"></i>
+                    <i class="fas fa-star task-star" onclick="selectStar(2)"></i>
+                    <i class="fas fa-star task-star" onclick="selectStar(3)"></i>
+                    <i class="fas fa-star task-star" onclick="selectStar(4)"></i>
+                    <i class="fas fa-star task-star" onclick="selectStar(5)"></i>
+                </div>
+                <button class="confirm-btn" id="btn-submit-rating" style="display:none; width: 100%; margin: 10px 0 0;" onclick="submitRating()">تأكيد التقييم</button>
+            </div>
+        </div>
+
+        <div id="popup-profit" class="popup">
+            <div class="popup-box" style="border-color: var(--success); box-shadow: 0 0 50px rgba(0, 255, 136, 0.3);">
+                <i class="fas fa-check-circle" style="font-size: 50px; color: var(--success); margin-bottom: 15px;"></i>
+                <h3 style="color: white; margin-bottom: 5px;">تم احتساب الأرباح بنجاح!</h3>
+                <p style="color: var(--success); font-weight: bold; font-size: 20px; direction: ltr; margin-bottom: 15px;" id="profit-amount-txt">+$0.00</p>
+                <button class="confirm-btn" style="width: 100%; margin: 0; background: var(--success); color: #000;" onclick="closeProfitPopup()">موافق</button>
+            </div>
+        </div>
+
+        <nav class="btm-nav">
+            <a href="#" class="nav-link active" onclick="navToPage('p-home', this)"><i class="fas fa-home"></i><span>الرئيسية</span></a>
+            <a href="#" class="nav-link" onclick="navToPage('p-tasks', this)"><i class="fas fa-compact-disc"></i><span>المهام</span></a>
+            <a href="#" class="nav-link" onclick="navToPage('p-wallet', this)"><i class="fas fa-wallet"></i><span>المحفظة</span></a>
+            <a href="#" class="nav-link" onclick="navToPage('p-profile', this)"><i class="fas fa-user-circle"></i><span>ملفي</span></a>
+        </nav>
+
+        <div id="popup-agent" class="popup"><div class="popup-box"><h3 style="color:#fff;" data-i18n="busy">Coordinator Busy</h3><p style="color:#aaa; margin:10px 0;">Please contact Assistant Emma Snow.</p><button onclick="contactEmma()" style="background:var(--cyan); border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold;">Contact Emma</button><button onclick="document.getElementById('popup-agent').style.display='none'" style="background:transparent; border:1px solid #555; color:#fff; padding:8px; border-radius:20px; width:100%; margin-top:10px;">Close</button></div></div>
+        <div id="popup-success" class="popup"><div class="popup-box"><i class="fas fa-check-circle success-icon"></i><h3 style="color:#fff;" data-i18n="success">Success!</h3><p style="color:#aaa; margin:10px 0;" data-i18n="wait_approval">Request submitted. Please wait for approval.</p><button onclick="document.getElementById('popup-success').style.display='none'; goHome()" style="background:var(--success); border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold; color:#000">OK</button></div></div>
+        <div id="popup-member" class="popup"><div class="popup-box"><div id="member-pop-content"></div><button onclick="document.getElementById('popup-member').style.display='none'" style="background:var(--cyan); border:none; padding:10px; border-radius:20px; width:100%; font-weight:bold; margin-top:15px;">Close</button></div></div>
+
+    </div>
+
+    <script>
+        // =========================================================================
+        // DATA ARRAYS & RATES
+        // =========================================================================
+        const exchangeRates = {
+            "USD": 1, "IQD": 1500, "SAR": 3.75, "KWD": 0.3, "AED": 3.67, "QAR": 3.64, "BHD": 0.38, 
+            "OMR": 0.38, "YER": 250, "JOD": 0.71, "SYP": 13000, "LBP": 89000, "ILS": 3.6, "EGP": 47, 
+            "LYD": 4.8, "TND": 3.1, "DZD": 134, "MAD": 10, "MRU": 39, "EUR": 0.92, "GBP": 0.78, 
+            "SEK": 10.5, "NOK": 10.6, "DKK": 6.8, "TRY": 32, "IRR": 42000, "INR": 83, "CNY": 7.2, 
+            "JPY": 150, "KRW": 1330, "IDR": 15600, "MYR": 4.7, "PHP": 56, "CAD": 1.35, "MXN": 17, 
+            "BRL": 5, "ARS": 850, "CLP": 970, "NGN": 1600, "ZAR": 19, "KES": 130, "AUD": 1.5, "NZD": 1.6
+        };
+
+        const langData = {
+            en: { total_balance: "Total Balance", charge: "Charge", withdraw: "Withdraw", team: "My Network", bank: "Bank", game: "Game", assets: "Assets", gift: "Gift", support: "VIP Management", playlist: "Top Artists Playlist", select_payment: "Select Payment", charge_details: "Charge Details", bank_name: "Bank Name", acc_name: "Account Name", acc_num: "Account/Wallet", select_plan: "Select VIP Plan", proof: "Payment Proof", upload_receipt: "Upload Receipt", terms: "Terms", confirm_charge: "Confirm Charge", select_withdraw: "Select Withdraw", commission: "Commission", withdraw_req: "Withdraw Request", your_name: "Your Name", your_card: "Card/Wallet Number", amount: "Amount", principal_locked: "Note: Capital is not withdrawable. Only profits.", fee: "Fee", receive: "You Receive", confirm_withdraw: "Confirm Withdraw", notif: "Notifications", lang: "Language", currency: "Currency", agents: "Agents", home: "Home", tasks: "Tasks", wallet: "Wallet", profile: "Profile", busy: "Coordinator Busy", success: "Success!", wait_approval: "Request submitted. Wait for approval.", success_circle: "WEALTH CIRCLE", members: "Members", team_profit: "Team Profit", invite_link: "Your Invitation Link", copy: "Copy", qr: "QR", share: "Share", all: "All", gen1: "Gen 1", gen2: "Gen 2", gen3: "Gen 3", top_earners: "Top Earners", today_invites: "Today Invites", today_profit: "Today Profit", week_profit: "Week Profit", best_member: "Best Member", reward_system: "GENERATION REWARDS" },
+            ar: { total_balance: "إجمالي الثروة", charge: "شحن", withdraw: "سحب", team: "شبكتي", bank: "بنك", game: "ألعاب", assets: "أصول", gift: "هدايا", support: "إدارة الـ VIP", playlist: "قائمة المشاهير", select_payment: "اختر طريقة الدفع", charge_details: "تفاصيل الشحن", bank_name: "اسم البنك", acc_name: "اسم الحساب", acc_num: "رقم الحساب/المحفظة", select_plan: "اختر خطة VIP", proof: "إثبات الدفع", upload_receipt: "رفع الإيصال", terms: "الشروط", confirm_charge: "تأكيد الشحن", select_withdraw: "اختر السحب", commission: "العمولة", withdraw_req: "طلب سحب", your_name: "اسمك", your_card: "رقم البطاقة/المحفظة", amount: "المبلغ", principal_locked: "ملاحظة: رأس المال غير قابل للسحب. فقط الأرباح.", fee: "الرسوم", receive: "ستستلم", confirm_withdraw: "تأكيد السحب", notif: "إشعارات", lang: "اللغة", currency: "العملة", agents: "الوكلاء", home: "الرئيسية", tasks: "مهام", wallet: "محفظة", profile: "ملفي", busy: "المنسق مشغول", success: "تم بنجاح!", wait_approval: "تم إرسال الطلب. انتظر الموافقة.", success_circle: "دائرة الثراء", members: "الأعضاء", team_profit: "أرباح الفريق", invite_link: "رابط دعوتك", copy: "نسخ", qr: "QR", share: "مشاركة", all: "الكل", gen1: "الجيل 1", gen2: "الجيل 2", gen3: "الجيل 3", top_earners: "الأعلى ربحاً", today_invites: "دعوات اليوم", today_profit: "أرباح اليوم", week_profit: "أرباح الأسبوع", best_member: "أفضل عضو", reward_system: "نظام مكافآت الأجيال" }
+        };
+
+        const banksData = [
+            { id: 'rajhi', name: 'Al Rajhi Bank', icon: 'fa-building-columns', color: '#325ea8', accName: 'Ahmed Al-Rajhi', accNum: 'SA4580000123456789' },
+            { id: 'binance', name: 'Binance', icon: 'fa-bitcoin-sign', color: '#f3ba2f', accName: 'Network: BSC (BEP20)', accNum: '0x36d539466294d302ed68e3ddae72a8273827f533' },
+            { id: 'super', name: 'Super Key', icon: 'fa-key', color: '#ff4444', accName: 'RUSAL', accNum: '8291502006' },
+            { id: 'chase', name: 'Chase Bank', icon: 'fa-landmark', color: '#117aca', accName: 'John Doe', accNum: '987654321' },
+            { id: 'boa', name: 'Bank of America', icon: 'fa-flag-usa', color: '#e31837', accName: 'Jane Smith', accNum: '123456789' },
+            { id: 'citi', name: 'Citi Bank', icon: 'fa-umbrella', color: '#003b70', accName: 'Global Corp', accNum: '567890123' },
+            { id: 'hsbc', name: 'HSBC', icon: 'fa-hexagon-nodes', color: '#db0011', accName: 'Int Ltd', accNum: '345678901' },
+            { id: 'barc', name: 'Barclays', icon: 'fa-dove', color: '#00aeef', accName: 'UK Branch', accNum: '901234567' },
+            { id: 'sant', name: 'Santander', icon: 'fa-fire', color: '#ec0000', accName: 'Euro Div', accNum: '234567890' },
+            { id: 'bnp', name: 'BNP Paribas', icon: 'fa-star', color: '#00915a', accName: 'FR Group', accNum: '678901234' },
+            { id: 'deut', name: 'Deutsche Bank', icon: 'fa-square-check', color: '#0018a8', accName: 'DE Main', accNum: '456789012' },
+            { id: 'ubs', name: 'UBS', icon: 'fa-key', color: '#4d4d4d', accName: 'Swiss Safe', accNum: '012345678' },
+            { id: 'sc', name: 'Standard Chart', icon: 'fa-earth-asia', color: '#007934', accName: 'Asia Hub', accNum: '789012345' },
+            { id: 'rbc', name: 'RBC Royal', icon: 'fa-crown', color: '#ffbe00', accName: 'CA North', accNum: '890123456' },
+            { id: 'td', name: 'TD Bank', icon: 'fa-chair', color: '#54b948', accName: 'Green Trust', accNum: '543216789' },
+            { id: 'wells', name: 'Wells Fargo', icon: 'fa-horse-head', color: '#cd1409', accName: 'Stage Coach', accNum: '1122334455' }
+        ];
+
+        const plansData = [
+            {name:"VIP 1", level:"Starter", price:10, tasks:5, daily:0.50, dur:365, bonus:2},
+            {name:"VIP 2", level:"Basic", price:25, tasks:8, daily:1.25, dur:365, bonus:5},
+            {name:"VIP 3", level:"Silver", price:50, tasks:10, daily:2.50, dur:365, bonus:10},
+            {name:"VIP 4", level:"Gold", price:100, tasks:15, daily:5.00, dur:365, bonus:20},
+            {name:"VIP 5", level:"Platinum", price:200, tasks:20, daily:10.00, dur:365, bonus:40},
+            {name:"VIP 6", level:"Diamond", price:400, tasks:25, daily:20.00, dur:365, bonus:80},
+            {name:"VIP 7", level:"Elite", price:800, tasks:30, daily:40.00, dur:365, bonus:160},
+            {name:"VIP 8", level:"VIP", price:1500, tasks:40, daily:75.00, dur:365, bonus:300},
+            {name:"VIP 9", level:"Royal", price:3000, tasks:50, daily:150.00, dur:365, bonus:600}
+        ];
+        
+        const vipStyles = {
+            "V0": { color: "#888", icon: "fa-gem" },
+            "VIP 1": { color: "#cd7f32", icon: "fa-medal" },
+            "VIP 2": { color: "#c0c0c0", icon: "fa-shield-alt" },
+            "VIP 3": { color: "#ffd700", icon: "fa-crown" },
+            "VIP 4": { color: "#00e5ff", icon: "fa-diamond" },
+            "VIP 5": { color: "#0055ff", icon: "fa-star" },
+            "VIP 6": { color: "#9d00ff", icon: "fa-bolt" },
+            "VIP 7": { color: "#ff00ff", icon: "fa-heart" },
+            "VIP 8": { color: "#ff3366", icon: "fa-fire" },
+            "VIP 9": { color: "#ffffff", icon: "fa-globe" }
+        };
+
+        const withdrawSpeeds = [{fee:10,time:"1h - 74h"},{fee:15,time:"1h - 45h"},{fee:20,time:"1h - 24h"},{fee:25,time:"10m - 3h"}];
+
+        const freeSingers = [
+            {name:"Taylor Swift",song:"Anti-Hero",img:"https://img.youtube.com/vi/b1kbLwvqugk/hqdefault.jpg",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
+            {name:"Adele",song:"Easy On Me",img:"https://img.youtube.com/vi/U3ASj1L6_sY/hqdefault.jpg",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
+            {name:"Beyoncé",song:"Break My Soul",img:"https://img.youtube.com/vi/yjki-9Pthh0/hqdefault.jpg",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"},
+            {name:"Rihanna",song:"Lift Me Up",img:"https://img.youtube.com/vi/Mx_OexsUI2M/hqdefault.jpg",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"}
+        ];
+
+        const taskSingers = [
+            {name:"Dua Lipa",song:"Levitating",img:"https://upload.wikimedia.org/wikipedia/en/f/f5/Dua_Lipa_-_Future_Nostalgia_%28Official_Album_Cover%29.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
+            {name:"Billie Eilish",song:"Bad Guy",img:"https://upload.wikimedia.org/wikipedia/en/3/38/Billie_Eilish_-_When_We_All_Fall_Asleep%2C_Where_Do_We_Go%3F.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
+            {name:"Ariana Grande",song:"Positions",img:"https://upload.wikimedia.org/wikipedia/en/a/a0/Ariana_Grande_-_Positions.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"},
+            {name:"Selena Gomez",song:"Lose You To Love Me",img:"https://upload.wikimedia.org/wikipedia/en/5/5e/Selena_Gomez_-_Rare.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3"},
+            {name:"Katy Perry",song:"Roar",img:"https://upload.wikimedia.org/wikipedia/en/0/0b/Katy_Perry_-_Prism.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3"},
+            {name:"Lady Gaga",song:"Rain On Me",img:"https://upload.wikimedia.org/wikipedia/en/7/70/Lady_Gaga_-_Chromatica.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3"},
+            {name:"Shakira",song:"Hips Don't Lie",img:"https://upload.wikimedia.org/wikipedia/en/5/52/Shakira_-_Oral_Fixation_Vol._2.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3"},
+            {name:"Miley Cyrus",song:"Flowers",img:"https://upload.wikimedia.org/wikipedia/en/d/db/Miley_Cyrus_-_Endless_Summer_Vacation.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"},
+            {name:"Sia",song:"Chandelier",img:"https://upload.wikimedia.org/wikipedia/en/6/6e/Sia_1000_Forms_of_Fear.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3"},
+            {name:"Camila Cabello",song:"Havana",img:"https://upload.wikimedia.org/wikipedia/en/c/c1/Camila_Cabello_-_Camila.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3"},
+            {name:"The Weeknd",song:"Blinding Lights",img:"https://upload.wikimedia.org/wikipedia/en/e/e6/The_Weeknd_-_Blinding_Lights.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3"},
+            {name:"Ed Sheeran",song:"Shape of You",img:"https://upload.wikimedia.org/wikipedia/en/4/45/Divide_cover.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3"},
+            {name:"Drake",song:"God's Plan",img:"https://upload.wikimedia.org/wikipedia/en/9/90/Scorpion_by_Drake.jpg",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3"},
+            {name:"Post Malone",song:"Circles",img:"https://upload.wikimedia.org/wikipedia/en/6/62/Post_Malone_-_Hollywood%27s_Bleeding.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3"},
+            {name:"Justin Bieber",song:"Peaches",img:"https://upload.wikimedia.org/wikipedia/en/2/22/Justin_Bieber_-_Justice.png",audio:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3"}
+        ];
+
+        const masterData = {
+            "Management": [{name:"Lucian Grainge",role:"CEO",img:"https://randomuser.me/api/portraits/men/1.jpg",wa:"https://wa.me/message/NYBEJS26JVUJI1",type:"vip"},{name:"Emma Snow",role:"Assistant",img:"https://randomuser.me/api/portraits/women/44.jpg",wa:"https://wa.me/qr/RSOSVBZLE5VPB1",type:"vip"}],
+            "Arab World": [{country:"Iraq",flag:"🇮🇶",curr:"IQD",agent:"BARAKR HUSIN",img:"32",active:true,wa:"https://wa.me/qr/L5HLFMPDVJFGA1"},{country:"Saudi Arabia",flag:"🇸🇦",curr:"SAR",agent:"Mohammed Al-Saud",img:"4"},{country:"Kuwait",flag:"🇰🇼",curr:"KWD",agent:"Abdullah",img:"5"},{country:"UAE",flag:"🇦🇪",curr:"AED",agent:"Ahmed",img:"6"},{country:"Qatar",flag:"🇶🇦",curr:"QAR",agent:"Hamad",img:"7"},{country:"Bahrain",flag:"🇧🇭",curr:"BHD",agent:"Khalifa",img:"8"},{country:"Oman",flag:"🇴🇲",curr:"OMR",agent:"Said",img:"9"},{country:"Yemen",flag:"🇾🇪",curr:"YER",agent:"Ali",img:"10"},{country:"Jordan",flag:"🇯🇴",curr:"JOD",agent:"Omar",img:"11"},{country:"Syria",flag:"🇸🇾",curr:"SYP",agent:"Bassam",img:"12"},{country:"Lebanon",flag:"🇱🇧",curr:"LBP",agent:"Hassan",img:"13"},{country:"Palestine",flag:"🇵🇸",curr:"ILS",agent:"Mahmoud",img:"14"},{country:"Egypt",flag:"🇪🇬",curr:"EGP",agent:"Ahmed",img:"15"},{country:"Libya",flag:"🇱🇾",curr:"LYD",agent:"Omar",img:"16"},{country:"Tunisia",flag:"🇹🇳",curr:"TND",agent:"Habib",img:"17"},{country:"Algeria",flag:"🇩🇿",curr:"DZD",agent:"Houari",img:"18"},{country:"Morocco",flag:"🇲🇦",curr:"MAD",agent:"Hassan",img:"19"},{country:"Mauritania",flag:"🇲🇷",curr:"MRU",agent:"Mohamed",img:"20"}],
+            "Europe": [{country:"France",flag:"🇫🇷",curr:"EUR",agent:"Jean",img:"21"},{country:"Germany",flag:"🇩🇪",curr:"EUR",agent:"Klaus",img:"22"},{country:"Italy",flag:"🇮🇹",curr:"EUR",agent:"Marco",img:"23"},{country:"Spain",flag:"🇪🇸",curr:"EUR",agent:"Carlos",img:"24"},{country:"UK",flag:"🇬🇧",curr:"GBP",agent:"James",img:"25"},{country:"Netherlands",flag:"🇳🇱",curr:"EUR",agent:"Willem",img:"26"},{country:"Sweden",flag:"🇸🇪",curr:"SEK",agent:"Lars",img:"27"},{country:"Norway",flag:"🇳🇴",curr:"NOK",agent:"Olaf",img:"50"},{country:"Denmark",flag:"🇩🇰",curr:"DKK",agent:"Erik",img:"51"}],
+            "Asia": [{country:"Turkey",flag:"🇹🇷",curr:"TRY",agent:"Mehmet",img:"28"},{country:"Iran",flag:"🇮🇷",curr:"IRR",agent:"Ali",img:"29"},{country:"India",flag:"🇮🇳",curr:"INR",agent:"Rahul",img:"30"},{country:"China",flag:"🇨🇳",curr:"CNY",agent:"Wei",img:"31"},{country:"Japan",flag:"🇯🇵",curr:"JPY",agent:"Hiroshi",img:"33"},{country:"Korea",flag:"🇰🇷",curr:"KRW",agent:"Kim",img:"34"},{country:"Indonesia",flag:"🇮🇩",curr:"IDR",agent:"Budi",img:"52"},{country:"Malaysia",flag:"🇲🇾",curr:"MYR",agent:"Ismail",img:"53"},{country:"Philippines",flag:"🇵🇭",curr:"PHP",agent:"Jose",img:"54"}],
+            "Americas": [{country:"USA",flag:"🇺🇸",curr:"USD",agent:"Michael",img:"35"},{country:"Canada",flag:"🇨🇦",curr:"CAD",agent:"David",img:"36"},{country:"Mexico",flag:"🇲🇽",curr:"MXN",agent:"Jose",img:"37"},{country:"Brazil",flag:"🇧🇷",curr:"BRL",agent:"Lucas",img:"38"},{country:"Argentina",flag:"🇦🇷",curr:"ARS",agent:"Mateo",img:"55"},{country:"Chile",flag:"🇨🇱",curr:"CLP",agent:"Ben",img:"56"}],
+            "Africa": [{country:"Nigeria",flag:"🇳🇬",curr:"NGN",agent:"Chin",img:"57"},{country:"South Africa",flag:"🇿🇦",curr:"ZAR",agent:"Thabo",img:"58"},{country:"Kenya",flag:"🇰🇪",curr:"KES",agent:"Jomo",img:"59"}],
+            "Oceania": [{country:"Australia",flag:"🇦🇺",curr:"AUD",agent:"Oliver",img:"60"},{country:"New Zealand",flag:"🇳🇿",curr:"NZD",agent:"Jack",img:"61"}]
+        };
+
+        const assetsBanksList = [
+            { id: 1, name: "Secure Trust Bank", days: 30, return: 6, risk: "منخفض", riskClass: "risk-low", fill: 85 },
+            { id: 2, name: "Global Finance Vault", days: 45, return: 8, risk: "منخفض", riskClass: "risk-low", fill: 70 },
+            { id: 3, name: "Prime Digital Bank", days: 60, return: 10, risk: "متوسط", riskClass: "risk-med", fill: 92 },
+            { id: 4, name: "United Asset Bank", days: 75, return: 12, risk: "متوسط", riskClass: "risk-med", fill: 45 },
+            { id: 5, name: "Capital Growth Bank", days: 90, return: 14, risk: "متوسط", riskClass: "risk-med", fill: 60 },
+            { id: 6, name: "Infinity Reserve", days: 120, return: 16, risk: "متوسط", riskClass: "risk-med", fill: 88 },
+            { id: 7, name: "Horizon Financial", days: 150, return: 18, risk: "مرتفع", riskClass: "risk-high", fill: 30 },
+            { id: 8, name: "Titan Secure Bank", days: 180, return: 20, risk: "مرتفع", riskClass: "risk-high", fill: 55 },
+            { id: 9, name: "Apex Wealth Bank", days: 210, return: 22, risk: "مرتفع", riskClass: "risk-high", fill: 75 },
+            { id: 10, name: "Elite Capital Vault", days: 240, return: 24, risk: "مرتفع", riskClass: "risk-high", fill: 40 },
+            { id: 11, name: "Royal Investment Bank", days: 300, return: 26, risk: "مرتفع", riskClass: "risk-high", fill: 20 },
+            { id: 12, name: "Platinum Reserve Bank", days: 365, return: 30, risk: "مرتفع", riskClass: "risk-high", fill: 95 }
+        ];
+
+        const supabaseUrl = 'https://fqluvkrpouuwfsofqnpc.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxbHV2a3Jwb3V1d2Zzb2ZxbnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNzM4MTEsImV4cCI6MjA4NTg0OTgxMX0.S4M2baG_01cCAObJ8o4WNLhnGAEdTT1z4PGUP__9XFU';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        let currentLang = 'en';
+        let currentCurrency = "$";
+        let currentRate = 1; 
+        let currentAudio = null;
+        let currentBtn = null;
+        let selectedWithdrawCommission = 0;
+        let selectedPlanForCharge = null; 
+        let uploadedReceiptBase64 = null;
+        let taskAudioObj = null; 
+        let isTaskPlaying = false; 
+        let taskInterval = null; 
+        let gameAttempts = 1; // محاولة مجانية واحدة للعبة الحظ
+        
+        let soundSuccessAction = new Audio('https://actions.google.com/sounds/v1/state_changes/positive_state_change.ogg');
+        let soundDeposit = new Audio('https://actions.google.com/sounds/v1/alarms/cash_register.ogg'); 
+        let soundWithdraw = new Audio('https://actions.google.com/sounds/v1/cartoon/magic_chime_short.ogg'); 
+        let soundTaskDone = new Audio('https://actions.google.com/sounds/v1/ui/coins_dropping.ogg');
+
+        let appUser = {
+            dbId: null,
+            id: '00000000',
+            plan: null, 
+            tasksTotal: 3, tasksDone: 0, credit: 90, availableFreeFunds: 0,
+            wallet: { tasks: 0, rewards: 0, ref: 0, total: 0 },
+            locked_capital: 0, withdrawableAmount: 0,
+            ref_code: '',
+            created_at: null
+        };
+
+        async function init() { 
+            let savedId = localStorage.getItem('universal_user_id');
+            if(!savedId) { window.location.href = "index.html"; return; }
+            appUser.dbId = savedId;
+            
+            setLang('ar'); 
+            await fetchUserData(); 
+            setInterval(fetchUserData, 10000);
+
+            renderMusicList(); 
+            renderBanks('charge'); 
+            renderBanks('withdraw'); 
+            renderPlans(); 
+            renderWithdrawSpeeds(); 
+            renderCurrencyList(); 
+            renderAgentsList(); 
+            renderVipManagement(); 
+            initAppUpdates();
+        }
+
+        async function fetchUserData() {
+            if(!appUser.dbId) return;
+            const { data } = await supabaseClient.from('users').select('*').eq('id', appUser.dbId).single();
+            if(data) {
+                appUser.id = data.id ? data.id.substring(0,8) : '00000000';
+                appUser.created_at = data.created_at;
+                
+                appUser.plan = data.plan !== 'V0' ? data.plan : null;
+                if(appUser.plan) {
+                    let userPlanData = plansData.find(p => p.name === appUser.plan);
+                    if(userPlanData) appUser.tasksTotal = userPlanData.tasks;
+                    if(data.credit < 100) { appUser.credit = 100; } else { appUser.credit = data.credit; }
+                } else {
+                    appUser.tasksTotal = 3; 
+                    appUser.credit = data.credit;
+                }
+
+                appUser.wallet.total = parseFloat(data.wallet_total);
+                appUser.wallet.tasks = parseFloat(data.wallet_tasks);
+                appUser.wallet.rewards = parseFloat(data.wallet_rewards);
+                appUser.wallet.ref = parseFloat(data.wallet_ref);
+                appUser.locked_capital = parseFloat(data.locked_capital) || 0;
+                appUser.tasksDone = data.tasks_done;
+                appUser.ref_code = data.ref_code;
+                
+                appUser.withdrawableAmount = appUser.wallet.tasks + appUser.wallet.rewards + appUser.wallet.ref;
+                
+                updateAllBalances();
+                fetchTeamData();
+            }
+            fetchNotifications();
+        }
+
+        async function fetchTeamData() {
+            if(!appUser.ref_code) return;
+            const { data } = await supabaseClient.from('users').select('id, email, wallet_total, created_at, wallet_ref').eq('referred_by', appUser.ref_code);
+            
+            if(data) {
+                document.getElementById('team-members-count').innerText = data.length;
+                
+                let todayCount = 0;
+                let bestMember = {email: '--', total: -1};
+                let now = new Date();
+                
+                data.forEach(member => {
+                    let d = new Date(member.created_at);
+                    if(d.toDateString() === now.toDateString()) todayCount++;
+                    let tWallet = parseFloat(member.wallet_total) || 0;
+                    if(tWallet > bestMember.total) { bestMember.total = tWallet; bestMember.email = member.email; }
+                });
+                
+                document.getElementById('today-invites-count').innerText = todayCount;
+                if(bestMember.total > -1) document.getElementById('best-member-name').innerText = bestMember.email.split('@')[0];
+                
+                let orbits = [document.querySelector('.orbit-1'), document.querySelector('.orbit-2'), document.querySelector('.orbit-3')];
+                if(orbits[0] && orbits[1] && orbits[2]) {
+                    orbits.forEach(o => o.innerHTML = ''); 
+                    data.slice(0, 9).forEach((m, index) => {
+                        let orbitIndex = index % 3;
+                        let angle = (index * 40) % 360; 
+                        let radius = orbitIndex === 0 ? 80 : (orbitIndex === 1 ? 130 : 180);
+                        let x = radius * Math.cos(angle * Math.PI / 180);
+                        let y = radius * Math.sin(angle * Math.PI / 180);
+                        
+                        let node = document.createElement('div');
+                        node.className = 'member-node';
+                        node.style.position = 'absolute';
+                        node.style.left = `calc(50% + ${x}px)`;
+                        node.style.top = `calc(50% + ${y}px)`;
+                        node.style.transform = `translate(-50%, -50%)`;
+                        node.innerHTML = '<i class="fas fa-user" style="color:var(--purple); font-size:16px;"></i>';
+                        orbits[orbitIndex].appendChild(node);
+                    });
+                }
+            }
+        }
+
+        function updateAllBalances() {
+            document.getElementById('balance-display').innerText = currentCurrency + " " + (appUser.wallet.total * currentRate).toFixed(2);
+            document.getElementById('w-tasks-profit').innerText = currentCurrency + " " + (appUser.wallet.tasks * currentRate).toFixed(2);
+            document.getElementById('w-rewards-profit').innerText = currentCurrency + " " + (appUser.wallet.rewards * currentRate).toFixed(2);
+            document.getElementById('w-ref-profit').innerText = currentCurrency + " " + (appUser.wallet.ref * currentRate).toFixed(2);
+            document.getElementById('w-capital-locked').innerText = currentCurrency + " " + (appUser.locked_capital * currentRate).toFixed(2);
+            
+            let teamProfDisp = document.getElementById('team-prof-disp');
+            if(teamProfDisp) teamProfDisp.innerText = currentCurrency + " " + (appUser.wallet.ref * currentRate).toFixed(2);
+
+            let todayBox = document.getElementById('today-profit-box');
+            if(todayBox) todayBox.innerText = currentCurrency + " " + (appUser.wallet.tasks * currentRate).toFixed(2);
+            
+            let weekBox = document.getElementById('week-profit-box');
+            if(weekBox) weekBox.innerText = currentCurrency + " " + (appUser.wallet.total * currentRate).toFixed(2);
+            
+            let vStyle = vipStyles[appUser.plan] || vipStyles["V0"];
+            let badge = document.getElementById('prof-plan-badge');
+            let diamond = document.getElementById('prof-diamond');
+            
+            if(badge) {
+                badge.innerText = appUser.plan || 'V0';
+                badge.style.borderColor = vStyle.color;
+                badge.style.color = vStyle.color;
+            }
+            if(diamond) {
+                diamond.className = `fas ${vStyle.icon} prof-diamond-icon`;
+                diamond.style.color = vStyle.color;
+                diamond.style.textShadow = `0 0 20px ${vStyle.color}`;
+            }
+            
+            document.getElementById('prof-user-id').innerText = appUser.id;
+            
+            let creditScore = document.getElementById('credit-score');
+            if (creditScore) {
+                creditScore.innerText = appUser.credit + '%';
+                if(appUser.credit <= 45) creditScore.style.borderColor = 'var(--danger)';
+                else creditScore.style.borderColor = 'var(--success)';
+            }
+            
+            setupTasksUI();
+            renderPlans(); 
+            renderVipManagement();
+            
+            let minVal = (10 * currentRate).toFixed(2);
+            let wAmountLabel = document.getElementById('label-w-amount');
+            if(wAmountLabel) wAmountLabel.innerText = currentLang === 'ar' ? `المبلغ (أقل شيء ${minVal} ${currentCurrency})` : `Amount (Min ${minVal} ${currentCurrency})`;
+        }
+
+        async function fetchNotifications() {
+            const { data } = await supabaseClient.from('transactions').select('*').eq('user_id', appUser.dbId).order('created_at', {ascending: false});
+            let notifHtml = '';
+            
+            if(data && data.length > 0) {
+                let lastViewed = localStorage.getItem('notif_last_' + appUser.id) || 0;
+                let latestTxTime = new Date(data[0].created_at).getTime();
+                
+                if (latestTxTime > lastViewed) {
+                    let badge = document.getElementById('notif-badge');
+                    if(badge) badge.style.display = 'block';
+                }
+
+                data.forEach(tx => {
+                    let icon = tx.status === 'approved' ? 'fa-check-circle' : (tx.status === 'rejected' ? 'fa-times-circle' : 'fa-clock');
+                    let color = tx.status === 'approved' ? 'var(--success)' : (tx.status === 'rejected' ? 'var(--danger)' : 'var(--cyan)');
+                    let title = tx.type === 'deposit' ? (currentLang==='ar'?'طلب شحن':'Deposit Request') : (currentLang==='ar'?'طلب سحب':'Withdraw Request');
+                    let localAmount = (tx.amount * currentRate).toFixed(2);
+                    notifHtml += `<div class="notif-item"><i class="fas ${icon}" style="color:${color}; font-size:24px;"></i><div><div style="font-weight:bold; color:white;">${title}</div><div style="font-size:11px; color:#aaa;">Status: ${tx.status} | Amount: ${currentCurrency} ${localAmount}</div></div></div>`;
+                });
+                let container = document.getElementById('notif-list-container');
+                if(container) container.innerHTML = notifHtml;
+            } else {
+                let container = document.getElementById('notif-list-container');
+                if(container) container.innerHTML = `<div style="padding:50px; text-align:center; color:#666;"><i class="fas fa-bell-slash" style="font-size:40px; margin-bottom:15px;"></i><p>لا توجد إشعارات</p></div>`;
+            }
+        }
+
+        async function fetchMyRecords() {
+            if(!appUser.dbId) return;
+            const container = document.getElementById('records-list');
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">جاري تحميل السجلات...</div>';
+            
+            try {
+                const { data, error } = await supabaseClient.from('transactions').select('*').eq('user_id', appUser.dbId).order('created_at', {ascending: false});
+                if(error) throw error;
+                let html = '';
+                
+                if(data && data.length > 0) {
+                    data.forEach(tx => {
+                        let typeTxt = tx.type === 'deposit' ? (currentLang==='ar'?'إيداع':'Deposit') : (currentLang==='ar'?'سحب':'Withdraw');
+                        let color = tx.status === 'approved' ? 'var(--success)' : (tx.status === 'rejected' ? 'var(--danger)' : 'var(--cyan)');
+                        let statusTxt = tx.status === 'approved' ? (currentLang==='ar'?'مقبول':'Approved') : (tx.status === 'rejected' ? (currentLang==='ar'?'مرفوض':'Rejected') : (currentLang==='ar'?'قيد المراجعة':'Pending'));
+                        let dateStr = new Date(tx.created_at).toLocaleString();
+                        let localAmount = (tx.amount * currentRate).toFixed(2);
+                        
+                        html += `<div style="background:rgba(255,255,255,0.05); padding:15px; margin:10px 20px; border-radius:10px; border-left:4px solid ${color};">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                <span style="font-weight:bold; color:#fff;">${typeTxt}</span>
+                                <span style="color:${color}; font-weight:bold;">${currentCurrency} ${localAmount}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; font-size:11px; color:#aaa;">
+                                <span>الحالة: ${statusTxt}</span>
+                                <span style="direction:ltr;">${dateStr}</span>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    html = '<div style="text-align:center; padding:40px; color:#666;">لا توجد سجلات مالية حتى الآن</div>';
+                }
+                container.innerHTML = html;
+            } catch(e) {
+                // عرض سجل افتراضي في حالة الخطأ بدلاً من البقاء فارغاً
+                let localAmount = (15 * currentRate).toFixed(2);
+                container.innerHTML = `<div style="background:rgba(255,255,255,0.05); padding:15px; margin:10px 20px; border-radius:10px; border-left:4px solid var(--success);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span style="font-weight:bold; color:#fff;">مكافأة الانضمام (افتراضي)</span>
+                        <span style="color:var(--success); font-weight:bold;">${currentCurrency} ${localAmount}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:11px; color:#aaa;">
+                        <span>الحالة: مقبول</span>
+                        <span style="direction:ltr;">${new Date().toLocaleString()}</span>
+                    </div>
+                </div>`;
+            }
+        }
+
+        function setLang(l) { 
+            currentLang = l; 
+            document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+            document.querySelectorAll('[data-i18n]').forEach(el => { 
+                const k = el.getAttribute('data-i18n'); 
+                if (langData[l][k]) el.innerText = langData[l][k]; 
+            }); 
+            fetchNotifications(); 
+        }
+
+        function setCurrency(c, rate) { 
+            currentCurrency = c; 
+            currentRate = rate || 1;
+            updateAllBalances(); 
+            goHome(); 
+        }
+
+        function openPage(id) { 
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+            if(id === 'p-notif') {
+                let badge = document.getElementById('notif-badge');
+                if(badge) badge.style.display = 'none'; 
+                localStorage.setItem('notif_last_' + appUser.id, Date.now());
+            }
+        }
+        function goHome() { navToPage('p-home', document.querySelectorAll('.nav-link')[0]); }
+        function navToPage(id, el = null) {
+            if(el) { document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
+            openPage(id);
+        }
+
+        function openCharge() { openPage('p-charge-methods'); }
+        function selectChargeBank(id) { const b = banksData.find(b => b.id === id); document.getElementById('c-bank-name').innerText=b.name; document.getElementById('c-acc-name').innerText=b.accName; document.getElementById('c-acc-num').innerText=b.accNum; openPage('p-charge-final'); }
+        
+        function renderBanks(type) {
+            const container = document.getElementById(type === 'charge' ? 'charge-bank-list' : 'withdraw-bank-list');
+            const fn = type === 'charge' ? 'selectChargeBank' : 'selectWithdrawBank';
+            let html = '';
+            banksData.forEach(b => { html += `<div class="bank-card" onclick="${fn}('${b.id}')"><div class="bank-icon"><i class="fas ${b.icon}" style="color:${b.color}"></i></div><span class="bank-name">${b.name}</span></div>`; });
+            container.innerHTML = html;
+        }
+
+        function renderPlans() {
+            const container = document.getElementById('plans-container');
+            let html = '';
+            plansData.forEach(p => { 
+                let localPrice = (p.price * currentRate).toFixed(2);
+                let localDaily = (p.daily * currentRate).toFixed(2);
+                let localBonus = (p.bonus * currentRate).toFixed(2);
+                html += `<div class="plan-card" onclick="selectPlan(this, ${p.price})"><div class="plan-title">${p.name}</div><div class="plan-price">${currentCurrency} ${localPrice}</div><div class="plan-detail">${p.tasks} المهام</div><div class="plan-detail">مكافأة الإيداع ${currentCurrency} ${localBonus}</div></div>`; 
+            });
+            container.innerHTML = html;
+        }
+
+        function renderVipManagement() {
+            const container = document.getElementById('vip-vertical-list');
+            let html = '';
+            plansData.forEach(p => {
+                let localPrice = (p.price * currentRate).toFixed(2);
+                let localDaily = (p.daily * currentRate).toFixed(2);
+                let localBonus = (p.bonus * currentRate).toFixed(2); 
+                html += `
+                <div style="background:#141625; border:1px solid rgba(255,255,255,0.1); border-radius:15px; padding:20px; margin-bottom:15px; text-align:right; border-right:4px solid var(--cyan);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <span style="background:var(--purple); padding:5px 15px; border-radius:20px; font-weight:bold; color:white; direction:ltr;">${currentCurrency} ${localPrice}</span>
+                        <h3 style="color:var(--cyan); margin:0; font-size:20px; font-weight:900;">${p.name} <span style="font-size:12px; color:#aaa;">(${p.level})</span></h3>
+                    </div>
+                    <div style="font-size:13px; color:#ccc; margin-bottom:15px; line-height:1.8;">
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #333; padding-bottom:5px;"><span>${p.tasks} مهام باليوم</span><i class="fas fa-tasks" style="color:#aaa;"></i></div>
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #333; padding:5px 0;"><span>${currentCurrency} ${localDaily} الربح اليومي</span><i class="fas fa-coins" style="color:var(--gold);"></i></div>
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #333; padding:5px 0;"><span>${p.dur} يوم</span><i class="fas fa-calendar-alt" style="color:#aaa;"></i></div>
+                        <div style="display:flex; justify-content:space-between; padding-top:5px;"><span style="color:var(--success);">مكافأة إيداع (${currentCurrency} ${localBonus})</span><i class="fas fa-gift" style="color:var(--success);"></i></div>
+                    </div>
+                    <button class="confirm-btn" style="margin:0; width:100%; padding:12px; font-size:14px;" onclick="openCharge()">شراء الخطة الآن</button>
+                </div>`;
+            });
+            if(container) container.innerHTML = html;
+        }
+
+        function selectPlan(el, priceUsd) { 
+            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected')); 
+            el.classList.add('selected'); 
+            selectedPlanForCharge = priceUsd; 
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                uploadedReceiptBase64 = evt.target.result;
+                document.getElementById('receipt-preview').src = uploadedReceiptBase64;
+                document.getElementById('receipt-preview').style.display = 'block';
+                document.getElementById('upload-icon').style.display = 'none';
+                document.getElementById('upload-text').innerText = "تم الإرفاق";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function confirmCharge() { 
+            if(!selectedPlanForCharge) return alert(currentLang==='ar'?"الرجاء اختيار الخطة!":"Please select a plan!");
+            if(!uploadedReceiptBase64) return alert(currentLang==='ar'?"الرجاء رفع صورة الإيصال!":"Please upload receipt!");
+            if(!appUser.dbId) return alert("Error: User not found");
+
+            soundSuccessAction.play().catch(e=>console.log(e));
+            document.getElementById('popup-success').style.display='flex'; 
+            
+            await supabaseClient.from('transactions').insert([{
+                user_id: appUser.dbId,
+                type: 'deposit',
+                amount: selectedPlanForCharge, 
+                status: 'pending',
+                receipt_base64: uploadedReceiptBase64,
+                bank_details: document.getElementById('c-bank-name').innerText
+            }]);
+            fetchUserData(); 
+        }
+
+        function openWithdraw() { openPage('p-withdraw-methods'); }
+        function selectWithdrawBank(id) { openPage('p-withdraw-speed'); }
+        
+        function renderWithdrawSpeeds() {
+            const container = document.getElementById('speed-list');
+            let html = '';
+            withdrawSpeeds.forEach(s => { html += `<div class="speed-opt" onclick="selectSpeed(${s.fee})"><span>Withdraw (Fee ${s.fee}%)</span><span class="speed-badge">${s.time}</span></div>`; });
+            container.innerHTML = html;
+        }
+        function selectSpeed(fee) { 
+            selectedWithdrawCommission = fee; 
+            document.getElementById('w-fee-display').innerText = fee + "%"; 
+            document.getElementById('w-amount').value = ""; 
+            document.getElementById('w-final-display').innerText = "0.00"; 
+            openPage('p-withdraw-final'); 
+        }
+        function calcWithdraw() { 
+            let amtLocal = parseFloat(document.getElementById('w-amount').value); 
+            if(!amtLocal) amtLocal = 0; 
+            let feeLocal = (amtLocal * selectedWithdrawCommission) / 100; 
+            document.getElementById('w-final-display').innerText = currentCurrency + " " + (amtLocal - feeLocal).toFixed(2); 
+        }
+        
+        async function confirmWithdraw() { 
+            let amtLocal = parseFloat(document.getElementById('w-amount').value); 
+            let minLocal = 10 * currentRate;
+            if(amtLocal < minLocal){alert(`أقل مبلغ للسحب هو ${minLocal.toFixed(2)} ${currentCurrency}`); return;} 
+            
+            let amtUsd = amtLocal / currentRate;
+            
+            if(amtUsd > appUser.withdrawableAmount) {
+                alert(`خطأ: لا يمكنك سحب رأس المال! المبلغ المطلوب أكبر من أرباحك القابلة للسحب.\nرصيدك القابل للسحب (الأرباح فقط) هو: $${appUser.withdrawableAmount.toFixed(2)}.`);
+                return;
+            }
+
+            let bankInfo = "Name: " + document.getElementById('w-name').value + " / Account: " + document.getElementById('w-wallet-num').value;
+            
+            soundSuccessAction.play().catch(e=>console.log(e));
+            document.getElementById('popup-success').style.display='flex'; 
+            
+            await supabaseClient.from('transactions').insert([{
+                user_id: appUser.dbId,
+                type: 'withdraw',
+                amount: amtUsd,
+                status: 'pending',
+                bank_details: bankInfo
+            }]);
+            fetchUserData();
+        }
+
+        function renderMusicList() {
+            const container = document.getElementById('music-list-container');
+            let html = '';
+            freeSingers.forEach((s, index) => { html += `<div class="music-card" id="c-${index}"><div class="song-info"><img src="${s.img}" class="song-img" loading="lazy"><div class="song-details"><span class="song-name" style="font-weight:bold;">${s.song}</span><br><span class="singer-name" style="font-size:11px; color:#aaa;">${s.name}</span></div></div><div class="play-btn" id="b-${index}" onclick="playM('${s.audio}',${index})"><i class="fas fa-play"></i></div></div>`; });
+            container.innerHTML = html;
+        }
+        function playM(u,i) { 
+             let btn=document.getElementById(`b-${i}`), card=document.getElementById(`c-${i}`);
+             if(currentAudio && currentBtn===btn) { 
+                 if(currentAudio.paused){currentAudio.play(); btn.innerHTML='<i class="fas fa-pause"></i>'; card.classList.add('playing');}
+                 else{currentAudio.pause(); btn.innerHTML='<i class="fas fa-play"></i>'; card.classList.remove('playing');} 
+                 return; 
+             }
+             if(currentAudio){currentAudio.pause(); document.querySelectorAll('.play-btn').forEach(b=>b.innerHTML='<i class="fas fa-play"></i>'); document.querySelectorAll('.music-card').forEach(c=>c.classList.remove('playing'));}
+             currentAudio=new Audio(u); currentAudio.play().catch(e => console.log(e)); currentBtn=btn; btn.innerHTML='<i class="fas fa-pause"></i>'; card.classList.add('playing');
+        }
+
+        function renderCurrencyList() {
+            const container = document.getElementById('currency-list');
+            let html = `<div class="section-header">Default</div><div class="list-row" onclick="setCurrency('$', 1)"><div style="display:flex;gap:12px;align-items:center;"><span style="font-size:20px;">🇺🇸</span><span style="font-weight:600;">USD (Default)</span></div><div style="color:var(--cyan);font-weight:bold;">$</div></div>`;
+            for (const [region, list] of Object.entries(masterData)) {
+                if(region === "Management") continue;
+                html += `<div class="section-header">${region}</div>`;
+                list.forEach(item => { 
+                    let rate = exchangeRates[item.curr] || 1;
+                    html += `<div class="list-row" onclick="setCurrency('${item.curr}', ${rate})"><div style="display:flex;gap:12px;align-items:center;"><span style="font-size:20px;">${item.flag}</span><span style="font-weight:600;">${item.country}</span></div><div style="color:var(--cyan);font-weight:bold;">${item.curr}</div></div>`; 
+                });
+            }
+            container.innerHTML = html;
+        }
+
+        function renderAgentsList() {
+            const container = document.getElementById('agents-list');
+            let html = '';
+            for (const [region, list] of Object.entries(masterData)) {
+                html += `<div class="section-header">${region}</div>`;
+                list.forEach(item => {
+                    let style = item.type === 'vip' ? "border:1px solid gold; background:linear-gradient(45deg, #2a2000, #1a1d2e);" : "";
+                    let action = (item.wa && (item.active || item.type === 'vip')) ? `window.open('${item.wa}', '_blank')` : `document.getElementById('popup-agent').style.display='flex'`;
+                    let imgUrl = item.type === 'vip' ? item.img : `https://randomuser.me/api/portraits/men/${item.img}.jpg`;
+                    html += `<div class="mgr-card" style="${style}"><img src="${imgUrl}" class="mgr-img" loading="lazy"><div style="flex:1;"><div style="color:#fff;font-weight:bold;font-size:14px;">${item.agent||item.name}</div><div style="color:var(--cyan);font-size:11px;">${item.role||'Coordinator'}</div><div style="color:#aaa;font-size:10px;">${item.flag||'🌍'} ${item.country||'Global'}</div></div><div class="wa-btn" onclick="${action}"><i class="fab fa-whatsapp"></i></div></div>`;
+                });
+            }
+            container.innerHTML = html;
+        }
+
+        function contactEmma() { window.open("https://wa.me/qr/RSOSVBZLE5VPB1", "_blank"); document.getElementById('popup-agent').style.display='none'; }
+        
+        function initAppUpdates() {
+            document.getElementById('user-ref-link').innerText = window.location.origin + '?ref=' + appUser.ref_code;
+            renderAssetBanks();
+            setInterval(() => {
+                let d = new Date();
+                if(d.getHours() === 23 && d.getMinutes() === 57 && d.getSeconds() === 0) {
+                    appUser.tasksDone = 0; setupTasksUI();
+                }
+            }, 1000);
+        }
+
+        function setupTasksUI() {
+            if(!appUser.plan || appUser.plan === 'V0') { 
+                let created = new Date(appUser.created_at).getTime();
+                let days = (Date.now() - created) / (1000 * 3600 * 24);
+                if (days <= 3) { 
+                    document.getElementById('tasks-locked-view').style.display = 'none';
+                    document.getElementById('tasks-active-view').style.display = 'flex';
+                    document.getElementById('training-banner').style.display = 'block'; // إظهار بانر التدريب
+                    appUser.tasksTotal = 3;
+                    updateTaskDisplay();
+                } else {
+                    document.getElementById('tasks-locked-view').style.display = 'block';
+                    document.getElementById('tasks-active-view').style.display = 'none';
+                }
+            } else { 
+                document.getElementById('tasks-locked-view').style.display = 'none'; 
+                document.getElementById('tasks-active-view').style.display = 'flex'; 
+                document.getElementById('training-banner').style.display = 'none'; // إخفاء الشرح للـ VIP
+                updateTaskDisplay(); 
+            }
+        }
+
+        function updateTaskDisplay() {
+            let remain = appUser.tasksTotal - appUser.tasksDone;
+            document.getElementById('task-counter-txt').innerText = `المهام المتبقية: ${remain} / ${appUser.tasksTotal}`;
+            document.getElementById('task-progress-bar').style.width = '0%';
+            
+            if(remain <= 0) { 
+                document.getElementById('task-song-name').innerText = "تم إكمال جميع المهام"; 
+                document.getElementById('btn-play-task').style.display = 'none'; 
+            } else { 
+                // تغيير الأغاني بناءً على اليوم ورقم المهمة ليحصل العضو على تنوع
+                let todayBase = Math.floor(Date.now() / 86400000);
+                let currentSinger = taskSingers[(todayBase + appUser.tasksDone) % taskSingers.length];
+                
+                document.getElementById('task-song-name').innerText = currentSinger.song + " - " + currentSinger.name; 
+                document.getElementById('task-cd').style.backgroundImage = "url('" + currentSinger.img + "')";
+                document.getElementById('btn-play-task').style.display = 'flex'; 
+            }
+        }
+
+        function startTaskMusic() {
+            if(appUser.tasksDone >= appUser.tasksTotal || isTaskPlaying) return;
+            isTaskPlaying = true;
+            document.getElementById('btn-play-task').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            let todayBase = Math.floor(Date.now() / 86400000);
+            let url = taskSingers[(todayBase + appUser.tasksDone) % taskSingers.length].audio; 
+            taskAudioObj = new Audio(url); 
+            
+            // معالجة الأخطاء لكي لا يتوقف البرنامج إذا لم يعمل الصوت
+            let playPromise = taskAudioObj.play();
+            
+            let startVisuals = () => {
+                document.getElementById('btn-play-task').innerHTML = '<i class="fas fa-pause"></i>';
+                document.getElementById('task-cd').classList.add('spin');
+                let seconds = 0;
+                taskInterval = setInterval(() => {
+                    seconds += 0.5; document.getElementById('task-progress-bar').style.width = ((seconds/15)*100) + '%';
+                    if(seconds >= 15) {
+                        clearInterval(taskInterval); 
+                        if(taskAudioObj) taskAudioObj.pause(); 
+                        isTaskPlaying = false;
+                        document.getElementById('btn-play-task').innerHTML = '<i class="fas fa-play" style="margin-left:5px;"></i>';
+                        document.getElementById('task-cd').classList.remove('spin');
+                        document.getElementById('popup-rating').style.display = 'flex';
+                    }
+                }, 500);
+            };
+
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    startVisuals();
+                }).catch(error => {
+                    // إذا منع المتصفح الصوت، قم بتشغيل شريط التقدم على أي حال
+                    console.log("تم منع الصوت التلقائي، جاري تشغيل المهمة صامتاً.");
+                    startVisuals();
+                });
+            } else {
+                startVisuals();
+            }
+        }
+
+        function selectStar(s) { document.querySelectorAll('.task-star').forEach((e, i) => { if(i < s) e.classList.add('active'); else e.classList.remove('active'); }); document.getElementById('btn-submit-rating').style.display = 'block'; }
+        
+        async function submitRating() {
+            document.getElementById('popup-rating').style.display = 'none';
+            document.getElementById('btn-submit-rating').style.display = 'none';
+            document.querySelectorAll('.task-star').forEach(e => e.classList.remove('active'));
+            soundTaskDone.play().catch(e=>console.log(e));
+            
+            appUser.tasksDone++;
+            
+            let profitPerTask = 0.334; 
+            if(appUser.plan && appUser.plan !== 'V0') {
+                let userPlanData = plansData.find(p => p.name === appUser.plan);
+                if(userPlanData && userPlanData.tasks > 0) {
+                    profitPerTask = userPlanData.daily / userPlanData.tasks;
+                }
+            }
+
+            appUser.wallet.tasks += profitPerTask; 
+            appUser.wallet.total += profitPerTask;
+            
+            let localProfit = (profitPerTask * currentRate).toFixed(2);
+            document.getElementById('profit-amount-txt').innerText = "+" + currentCurrency + " " + localProfit;
+            document.getElementById('popup-profit').style.display = 'flex';
+            updateAllBalances(); 
+
+            if(appUser.dbId) {
+                await supabaseClient.from('users').update({ wallet_tasks: appUser.wallet.tasks, wallet_total: appUser.wallet.total, tasks_done: appUser.tasksDone }).eq('id', appUser.dbId);
+            }
+        }
+
+        function closeProfitPopup() { document.getElementById('popup-profit').style.display = 'none'; }
+        function executeLogout() { localStorage.removeItem('universal_user_id'); window.location.href = "index.html"; }
+        function copyRefLink() { navigator.clipboard.writeText(document.getElementById('user-ref-link').innerText); alert("تم النسخ!"); }
+        
+        function toggleAssets(tab) {
+            if(tab === 'all') {
+                document.getElementById('tab-all').classList.add('active'); document.getElementById('tab-my').classList.remove('active');
+                document.getElementById('view-all-assets').style.display = 'block'; document.getElementById('view-my-assets').style.display = 'none';
+            } else {
+                document.getElementById('tab-all').classList.remove('active'); document.getElementById('tab-my').classList.add('active');
+                document.getElementById('view-all-assets').style.display = 'none'; document.getElementById('view-my-assets').style.display = 'block';
+            }
+        }
+
+        function renderAssetBanks() {
+            let html = '';
+            assetsBanksList.forEach(b => {
+                html += `
+                <div class="asset-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px dashed rgba(255,255,255,0.1); padding-bottom:10px;">
+                        <span style="font-weight:900; color:#fff;"><i class="fas fa-landmark" style="color:var(--cyan); margin-left:5px;"></i> ${b.name}</span>
+                        <span class="asset-risk ${b.riskClass}">${b.risk}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px; text-align:center;">
+                        <div><span style="font-size:16px; font-weight:bold; color:var(--cyan);">${b.days}</span><br><span style="font-size:11px; color:#aaa;">مدة (يوم)</span></div>
+                        <div><span style="font-size:16px; font-weight:bold; color:var(--cyan); direction:ltr;">${b.return}%</span><br><span style="font-size:11px; color:#aaa;">العائد التقديري</span></div>
+                    </div>
+                    <div style="font-size:10px; color:#aaa; margin-bottom:5px; text-align:left; direction:ltr;">Subscribed: ${b.fill}%</div>
+                    <div style="width:100%; height:8px; background:rgba(0,0,0,0.5); border-radius:4px; margin-bottom:15px; overflow:hidden;">
+                        <div style="height:100%; background:var(--gold); width:${b.fill}%; border-radius:4px;"></div>
+                    </div>
+                    <button style="background:rgba(0,229,255,0.1); border:1px solid var(--cyan); color:var(--cyan); padding:10px; width:100%; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="investInAsset(${b.id})">ابدأ الاستثمار</button>
+                </div>`;
+            });
+            let container = document.getElementById('assets-list-container');
+            if(container) container.innerHTML = html;
+        }
+
+        function investInAsset(id) {
+            let minInvest = 10; 
+            if(appUser.wallet.total < minInvest) { 
+                alert("رصيدك غير كافٍ للاستثمار في البنك. يجب أن يكون لديك رصيد لا يقل عن $" + minInvest); 
+                openCharge(); 
+            } 
+            else { 
+                alert("جاري تحويل طلب الاستثمار... (محاكاة)"); 
+            }
+        }
+
+        function openMysteryBox() {
+            let invites = parseInt(document.getElementById('team-members-count').innerText) || 0;
+            if(invites >= 3) {
+                let prize = (Math.random() * 9 + 1).toFixed(2);
+                alert(`مبروك! ربحت $${prize} من صندوق المفاجآت!`);
+            } else {
+                alert(`عذراً، يجب دعوة 3 أشخاص لفتح الصندوق. لديك حالياً ${invites} دعوات.`);
+            }
+        }
+
+        // كود تشغيل لعبة الحظ
+        function playLuckyGame() {
+            if(gameAttempts <= 0) {
+                alert('ليس لديك محاولات حالياً! يرجى دعوة أصدقاء أو العودة غداً.');
+                return;
+            }
+            
+            gameAttempts--;
+            document.getElementById('game-attempts-count').innerText = gameAttempts;
+
+            let btn = document.getElementById('spin-btn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.style.pointerEvents = 'none';
+
+            let boxes = document.querySelectorAll('.game-prize-box:not(.game-play-btn)');
+            let prizes = [1, 25, 0, 60, 90, 10, 100, 150]; // 0 تعني حظ أوفر
+            
+            // تأثير التحديد العشوائي
+            let highlightInterval = setInterval(() => {
+                boxes.forEach(b => b.style.backgroundColor = 'rgba(255,255,255,0.05)');
+                let rand = Math.floor(Math.random() * boxes.length);
+                boxes[rand].style.backgroundColor = 'var(--purple)';
+            }, 100);
+
+            // إيقاف التحديد بعد 3 ثواني وإعلان النتيجة
+            setTimeout(() => {
+                clearInterval(highlightInterval);
+                boxes.forEach(b => b.style.backgroundColor = 'rgba(255,255,255,0.05)');
+
+                // نسبة الفوز (يمكنك تعديلها لاحقاً لتعطي حظ أوفر أو مبالغ صغيرة غالباً)
+                let roll = Math.random();
+                let wonIndex = 2; // افتراضي: حظ أوفر
+                
+                if(roll < 0.2) wonIndex = 0; // $1
+                else if(roll < 0.3) wonIndex = 5; // $10
+                else if(roll < 0.8) wonIndex = 2; // حظ أوفر
+                else wonIndex = 1; // $25 
+
+                boxes[wonIndex].style.backgroundColor = 'var(--success)';
+                btn.innerHTML = 'العب';
+                btn.style.pointerEvents = 'auto';
+
+                let wonAmount = prizes[wonIndex];
+                if(wonAmount > 0) {
+                    appUser.wallet.rewards += wonAmount;
+                    appUser.wallet.total += wonAmount;
+                    updateAllBalances();
+                    
+                    // تحديث قاعدة البيانات إذا لزم
+                    if(appUser.dbId) {
+                         supabaseClient.from('users').update({ 
+                             wallet_rewards: appUser.wallet.rewards, 
+                             wallet_total: appUser.wallet.total 
+                         }).eq('id', appUser.dbId).then(()=>console.log("Game DB Saved"));
+                    }
+                    
+                    alert(`مبروك! لقد ربحت ${currentCurrency}${wonAmount * currentRate} من عجلة الحظ! تمت إضافتها إلى محفظتك.`);
+                } else {
+                    alert('حظ أوفر! حاول مرة أخرى قريباً.');
+                }
+            }, 3000);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

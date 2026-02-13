@@ -1,0 +1,20 @@
+{
+  "name": "Universal Music VIP",
+  "short_name": "Universal VIP",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#080a12",
+  "theme_color": "#9d00ff",
+  "icons": [
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Universal_Music_Group_logo.svg/1200px-Universal_Music_Group_logo.svg.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Universal_Music_Group_logo.svg/1200px-Universal_Music_Group_logo.svg.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

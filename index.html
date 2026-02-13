@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="google" content="notranslate">
+    <title>Universal Music Group - Login</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+        :root {
+            --cyan: #00e5ff;
+            --purple: #9d00ff;
+            --bg-dark: #080a12;
+            --input-bg: rgba(20, 22, 35, 0.7);
+            --border-color: rgba(255, 255, 255, 0.15);
+            --gradient: linear-gradient(135deg, var(--purple), var(--cyan));
+            --success: #00ff88;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body { 
+            background-color: #000; 
+            height: 100vh;
+            height: 100dvh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            overflow: hidden; 
+            color: white; 
+        }
+
+        .app-container {
+            width: 100%; 
+            max-width: 420px; 
+            height: 100%; 
+            position: relative; 
+            display: flex; 
+            flex-direction: column;
+            background-color: var(--bg-dark);
+        }
+
+        /* ==========================================
+           1. تجميعة المطربين (Singers Collage Background)
+           ========================================== */
+        .singers-collage {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            background: #000;
+            overflow: hidden;
+        }
+        .s-img {
+            width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center top;
+            opacity: 0.6;
+            filter: grayscale(100%) contrast(1.3);
+        }
+        /* روابط مطربات أجنبيات فقط تملئ الشاشة */
+        .s-1 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/b/b5/191125_Taylor_Swift_at_the_2019_American_Music_Awards_%28cropped%29.png'); }
+        .s-2 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/8/85/Selena_Gomez_-_Walmart_Soundcheck_Concert.jpg'); }
+        .s-3 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/d/dd/Ariana_Grande_Grammys_Red_Carpet_2020.png'); }
+        .s-4 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/f/f3/Billie_Eilish_2019_by_Glenn_Francis_%28cropped%29_2.jpg'); }
+        .s-5 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/c/c2/Rihanna_Fenty_2018.png'); }
+        .s-6 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/7/7c/Adele_2016.jpg'); }
+        .s-7 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/1/1c/DuaLipaO2020522_%28101_of_110%29_%2852052470251%29_%28cropped%29.jpg'); }
+        .s-8 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/c/c2/Katy_Perry_UNICEF_2012.jpg'); }
+        .s-9 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/a/ac/Lady_Gaga_in_2018.jpg'); }
+        .s-10 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/4/43/Shakira_at_the_2010_FIFA_World_Cup_Kick-off_Celebration_Concert_2.jpg'); }
+        .s-11 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/3/3b/Miley_Cyrus_2019.jpg'); }
+        .s-12 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/f/f1/Beyonce_-_The_Formation_World_Tour%2C_at_Wembley_Stadium_in_London%2C_England.jpg'); }
+        .s-13 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/b/b6/Lana_Del_Rey_Cannes_2012_%28cropped%29.jpg'); }
+        .s-14 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/d/da/Britney_Spears_2013_%28Straighten_Crop%29.jpg'); }
+        .s-15 { background-image: url('https://upload.wikimedia.org/wikipedia/commons/2/23/Camila_Cabello_at_the_2019_iHeartRadio_Music_Awards_2.jpg'); }
+
+        /* طبقة لدمج ألوان النيون فوق صور المطربين */
+        .s-gradient-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(157, 0, 255, 0.7) 0%, rgba(0, 229, 255, 0.7) 100%);
+            mix-blend-mode: multiply; /* يجعل الصور تتوهج بألوان المنصة */
+            z-index: 1;
+        }
+
+        /* طبقة التظليل للحقول (Fade) */
+        .s-fade {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, rgba(8, 10, 18, 0.5) 0%, rgba(8, 10, 18, 0.95) 100%),
+                        linear-gradient(to top, #080a12 0%, transparent 60%);
+            z-index: 2;
+        }
+
+        /* ==========================================
+           2. نظام النجوم (Floating Particles)
+           ========================================== */
+        #particles {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 3;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            background: rgba(0, 229, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.8), 0 0 20px rgba(157, 0, 255, 0.5);
+            animation: floatUp linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        /* ==========================================
+           3. المحتوى والحقول
+           ========================================== */
+        .content {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .content::-webkit-scrollbar { display: none; }
+
+        .lang-toggle {
+            position: absolute;
+            top: 20px; right: 20px; width: 40px; height: 40px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--border-color); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; z-index: 20; backdrop-filter: blur(5px);
+        }
+
+        /* توهج النيون حول اللوجو */
+        .logo-section {
+            text-align: center; margin-top: 60px; margin-bottom: 30px;
+        }
+        .logo-glow {
+            width: 120px; height: 120px; margin: 0 auto; border-radius: 50%;
+            background: url('main-logo.png') center/contain no-repeat;
+            box-shadow: 0 0 20px var(--cyan), 0 0 50px var(--purple), inset 0 0 20px rgba(157,0,255,0.5);
+            border: 2px solid var(--cyan);
+            animation: pulseGlow 3s infinite alternate;
+        }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 20px var(--cyan), 0 0 40px var(--purple); transform: scale(1); }
+            100% { box-shadow: 0 0 40px var(--cyan), 0 0 80px var(--purple); transform: scale(1.05); }
+        }
+        .brand-title {
+            margin-top: 15px; font-size: 22px; font-weight: 900; letter-spacing: 2px;
+            background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .form-container { padding: 0 25px; width: 100%; }
+        .view-section { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .view-section.active { display: block; }
+
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-label { display: block; font-size: 12px; color: var(--cyan); margin-bottom: 8px; font-weight: bold; }
+        
+        .phone-input-wrapper {
+            display: flex; background: var(--input-bg);
+            border: 1px solid var(--border-color); border-radius: 15px;
+            overflow: hidden; backdrop-filter: blur(10px);
+        }
+        .country-selector {
+            padding: 15px 10px; background: rgba(0,0,0,0.4);
+            border-right: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+            min-width: 90px; justify-content: center;
+        }
+        .standard-input {
+            flex: 1; background: transparent; border: none; color: white;
+            padding: 15px; font-size: 15px; width: 100%;
+        }
+        .standard-input-full {
+            width: 100%; background: var(--input-bg); border: 1px solid var(--border-color);
+            border-radius: 15px; color: white; padding: 15px; font-size: 15px; backdrop-filter: blur(10px);
+        }
+        .eye-icon {
+            position: absolute; right: 15px; top: 42px; color: #888; cursor: pointer; font-size: 18px;
+        }
+        html[dir="rtl"] .eye-icon { right: auto; left: 15px; }
+
+        .captcha-box { display: flex; gap: 15px; }
+        .captcha-display {
+            background: rgba(0, 229, 255, 0.1); border: 1px dashed var(--cyan); color: var(--cyan);
+            border-radius: 15px; width: 120px; display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: 900; letter-spacing: 5px; user-select: none;
+        }
+
+        .main-btn {
+            width: 100%; padding: 16px; background: var(--gradient); border: none; border-radius: 30px;
+            color: white; font-size: 16px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 5px 20px rgba(157, 0, 255, 0.4); margin-top: 10px; transition: 0.3s;
+        }
+        .main-btn:active { transform: scale(0.95); }
+
+        .switch-link { text-align: center; margin-top: 25px; font-size: 13px; color: #aaa; }
+        .switch-link span { color: var(--cyan); font-weight: bold; cursor: pointer; text-decoration: underline; }
+
+        /* Modal الدول */
+        .country-modal {
+            position: fixed; bottom: -100%; left: 0; width: 100%; height: 70%;
+            background: #141625; border-top-left-radius: 25px; border-top-right-radius: 25px;
+            z-index: 100; transition: bottom 0.3s ease-in-out; display: flex; flex-direction: column;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8); border-top: 1px solid var(--purple);
+        }
+        .country-modal.open { bottom: 0; }
+        .modal-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .search-box { padding: 15px 20px; }
+        .search-box input { width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.5); color: white; }
+        .countries-list { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+        .c-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        .c-item:active { background: rgba(0, 229, 255, 0.1); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 99; display: none; }
+
+        .popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; display: none; align-items: center; justify-content: center; animation: fadeIn 0.2s; }
+        .popup-box { background: #1e2130; width: 85%; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid var(--success); box-shadow: 0 0 50px rgba(0, 255, 136, 0.3); }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="singers-collage">
+            <div class="s-img s-1"></div>
+            <div class="s-img s-2"></div>
+            <div class="s-img s-3"></div>
+            <div class="s-img s-4"></div>
+            <div class="s-img s-5"></div>
+            <div class="s-img s-6"></div>
+            <div class="s-img s-7"></div>
+            <div class="s-img s-8"></div>
+            <div class="s-img s-9"></div>
+            <div class="s-img s-10"></div>
+            <div class="s-img s-11"></div>
+            <div class="s-img s-12"></div>
+            <div class="s-img s-13"></div>
+            <div class="s-img s-14"></div>
+            <div class="s-img s-15"></div>
+            <div class="s-gradient-overlay"></div>
+        </div>
+        
+        <div class="s-fade"></div>
+
+        <div id="particles"></div>
+
+        <div class="content">
+            
+            <div class="lang-toggle" onclick="toggleLanguage()">
+                <i class="fas fa-globe"></i>
+            </div>
+
+            <div class="logo-section">
+                <div class="logo-glow"></div>
+                <div class="brand-title">UNIVERSAL MUSIC</div>
+            </div>
+
+            <div class="form-container">
+                
+                <div id="login-view" class="view-section active">
+                    <div class="input-group">
+                        <label class="input-label" data-i18n="phone_number">Phone Number</label>
+                        <div class="phone-input-wrapper">
+                            <div class="country-selector" onclick="openCountryModal('login')">
+                                <span id="login-flag">🇺🇸</span> <span id="login-code">+1</span>
+                            </div>
+                            <input type="tel" id="login-phone" class="standard-input" placeholder="000 000 0000">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label" data-i18n="password">Password</label>
+                        <input type="password" id="login-pass" class="standard-input-full" placeholder="••••••••">
+                        <i class="fas fa-eye eye-icon" onclick="togglePass('login-pass', this)"></i>
+                    </div>
+
+                    <button class="main-btn" onclick="executeLogin()" data-i18n="btn_login">Login</button>
+
+                    <div class="switch-link">
+                        <span data-i18n="no_account_text">Don't have an account?</span> 
+                        <span onclick="switchView('register')" data-i18n="create_now">Create one now</span>
+                    </div>
+                </div>
+
+                <div id="register-view" class="view-section">
+                    
+                    <div class="input-group">
+                        <label class="input-label" data-i18n="full_name">Full Name</label>
+                        <input type="text" id="reg-name" class="standard-input-full" placeholder="John Doe">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label" data-i18n="phone_number">Phone Number</label>
+                        <div class="phone-input-wrapper">
+                            <div class="country-selector" onclick="openCountryModal('reg')">
+                                <span id="reg-flag">🇺🇸</span> <span id="reg-code">+1</span>
+                            </div>
+                            <input type="tel" id="reg-phone" class="standard-input" placeholder="000 000 0000">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label" data-i18n="password">Password</label>
+                        <input type="password" id="reg-pass" class="standard-input-full" placeholder="••••••••">
+                        <i class="fas fa-eye eye-icon" onclick="togglePass('reg-pass', this)"></i>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label" data-i18n="confirm_password">Confirm Password</label>
+                        <input type="password" id="reg-pass2" class="standard-input-full" placeholder="••••••••">
+                        <i class="fas fa-eye eye-icon" onclick="togglePass('reg-pass2', this)"></i>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label" data-i18n="verify_code">Verification Code</label>
+                        <div class="captcha-box">
+                            <input type="number" id="reg-captcha" class="standard-input-full" placeholder="1234">
+                            <div class="captcha-display" id="captcha-code">0000</div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label" data-i18n="ref_code">Referral Code</label>
+                        <input type="text" id="reg-ref" class="standard-input-full" placeholder="Optional">
+                    </div>
+
+                    <button class="main-btn" onclick="executeRegister()" data-i18n="btn_register">Create Account</button>
+
+                    <div class="switch-link" style="margin-bottom: 40px;">
+                        <span data-i18n="have_account_text">Already have an account?</span> 
+                        <span onclick="switchView('login')" data-i18n="login_now">Login</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="modal-overlay" onclick="closeCountryModal()"></div>
+        <div class="country-modal" id="country-modal">
+            <div class="modal-header">
+                <h3 style="margin:0;" data-i18n="select_country">Select Country</h3>
+                <i class="fas fa-times" style="font-size:20px; cursor:pointer;" onclick="closeCountryModal()"></i>
+            </div>
+            <div class="search-box">
+                <input type="text" id="country-search" placeholder="Search..." onkeyup="filterCountries()">
+            </div>
+            <div class="countries-list" id="countries-list"></div>
+        </div>
+
+        <div id="popup-success" class="popup">
+            <div class="popup-box">
+                <i class="fas fa-check-circle" style="font-size: 60px; color: var(--success); margin-bottom: 15px;"></i>
+                <h2 style="color: white; margin-bottom: 10px;" data-i18n="reg_success_title">Account Created!</h2>
+                <p style="color: #aaa; font-size: 14px;" data-i18n="reg_success_desc">Welcome to Universal Music VIP.</p>
+                <button class="main-btn" onclick="goToDashboard()" style="background:var(--success); color:#000;">OK</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://fqluvkrpouuwfsofqnpc.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxbHV2a3Jwb3V1d2Zzb2ZxbnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNzM4MTEsImV4cCI6MjA4NTg0OTgxMX0.S4M2baG_01cCAObJ8o4WNLhnGAEdTT1z4PGUP__9XFU';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const dict = {
+            en: {
+                phone_number: "Phone Number", password: "Password", btn_login: "Login", no_account_text: "Don't have an account?", create_now: "Create one now",
+                full_name: "Full Name", confirm_password: "Confirm Password", verify_code: "Verification Code", ref_code: "Referral Code", btn_register: "Create Account",
+                have_account_text: "Already have an account?", login_now: "Login", select_country: "Select Country", reg_success_title: "Account Created!", reg_success_desc: "Welcome to Universal Music VIP.",
+                search_placeholder: "Search country..."
+            },
+            ar: {
+                phone_number: "رقم الهاتف", password: "كلمة المرور", btn_login: "تسجيل الدخول", no_account_text: "لا يوجد لديك حساب؟", create_now: "أنشئ حساب الآن",
+                full_name: "الاسم الكامل", confirm_password: "تأكيد كلمة المرور", verify_code: "رمز التحقق", ref_code: "كود الإحالة", btn_register: "إنشاء حساب",
+                have_account_text: "لديك حساب بالفعل؟", login_now: "تسجيل الدخول", select_country: "اختر الدولة", reg_success_title: "تم إنشاء الحساب!", reg_success_desc: "مرحباً بك في منصة Universal VIP.",
+                search_placeholder: "ابحث عن دولة..."
+            }
+        };
+
+        const countriesData = [
+            { en: "France", ar: "فرنسا", code: "+33", flag: "🇫🇷" }, { en: "Germany", ar: "ألمانيا", code: "+49", flag: "🇩🇪" }, { en: "Italy", ar: "إيطاليا", code: "+39", flag: "🇮🇹" }, { en: "Spain", ar: "إسبانيا", code: "+34", flag: "🇪🇸" }, { en: "UK", ar: "بريطانيا", code: "+44", flag: "🇬🇧" }, { en: "Netherlands", ar: "هولندا", code: "+31", flag: "🇳🇱" }, { en: "Sweden", ar: "السويد", code: "+46", flag: "🇸🇪" },
+            { en: "Turkey", ar: "تركيا", code: "+90", flag: "🇹🇷" }, { en: "Iran", ar: "إيران", code: "+98", flag: "🇮🇷" }, { en: "India", ar: "الهند", code: "+91", flag: "🇮🇳" }, { en: "China", ar: "الصين", code: "+86", flag: "🇨🇳" }, { en: "Japan", ar: "اليابان", code: "+81", flag: "🇯🇵" }, { en: "South Korea", ar: "كوريا الجنوبية", code: "+82", flag: "🇰🇷" }, { en: "Indonesia", ar: "إندونيسيا", code: "+62", flag: "🇮🇩" },
+            { en: "USA", ar: "الولايات المتحدة", code: "+1", flag: "🇺🇸" }, { en: "Canada", ar: "كندا", code: "+1", flag: "🇨🇦" }, { en: "Mexico", ar: "المكسيك", code: "+52", flag: "🇲🇽" }, { en: "Brazil", ar: "البرازيل", code: "+55", flag: "🇧🇷" }, { en: "Argentina", ar: "الأرجنتين", code: "+54", flag: "🇦🇷" }, { en: "Chile", ar: "تشيلي", code: "+56", flag: "🇨🇱" },
+            { en: "Nigeria", ar: "نيجيريا", code: "+234", flag: "🇳🇬" }, { en: "Kenya", ar: "كينيا", code: "+254", flag: "🇰🇪" }, { en: "South Africa", ar: "جنوب أفريقيا", code: "+27", flag: "🇿🇦" }, { en: "Ethiopia", ar: "إثيوبيا", code: "+251", flag: "🇪🇹" }, { en: "Australia", ar: "أستراليا", code: "+61", flag: "🇦🇺" }, { en: "New Zealand", ar: "نيوزيلندا", code: "+64", flag: "🇳🇿" },
+            { en: "Iraq", ar: "العراق", code: "+964", flag: "🇮🇶" }, { en: "Saudi Arabia", ar: "السعودية", code: "+966", flag: "🇸🇦" }, { en: "Kuwait", ar: "الكويت", code: "+965", flag: "🇰🇼" }, { en: "UAE", ar: "الإمارات", code: "+971", flag: "🇦🇪" }, { en: "Qatar", ar: "قطر", code: "+974", flag: "🇶🇦" }, { en: "Bahrain", ar: "البحرين", code: "+973", flag: "🇧🇭" }, { en: "Oman", ar: "عُمان", code: "+968", flag: "🇴🇲" }, { en: "Yemen", ar: "اليمن", code: "+967", flag: "🇾🇪" }, { en: "Jordan", ar: "الأردن", code: "+962", flag: "🇯🇴" }, { en: "Syria", ar: "سوريا", code: "+963", flag: "🇸🇾" }, { en: "Lebanon", ar: "لبنان", code: "+961", flag: "🇱🇧" }, { en: "Palestine", ar: "فلسطين", code: "+970", flag: "🇵🇸" }, { en: "Egypt", ar: "مصر", code: "+20", flag: "🇪🇬" }, { en: "Libya", ar: "ليبيا", code: "+218", flag: "🇱🇾" }, { en: "Tunisia", ar: "تونس", code: "+216", flag: "🇹🇳" }, { en: "Algeria", ar: "الجزائر", code: "+213", flag: "🇩🇿" }, { en: "Morocco", ar: "المغرب", code: "+212", flag: "🇲🇦" }, { en: "Mauritania", ar: "موريتانيا", code: "+222", flag: "🇲🇷" }
+        ];
+
+        let currentLang = 'en';
+        let targetPhoneField = 'login'; 
+        let currentCaptcha = "0000";
+        let successSound = new Audio('https://actions.google.com/sounds/v1/ui/proxima_ring_notification.ogg');
+
+        window.onload = () => {
+            initParticles();
+            checkReferralUrl();
+            generateCaptcha();
+            renderCountries();
+            setLang('en'); // اللغة الإنجليزية إجبارية عند الفتح
+        };
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'ar' : 'en';
+            setLang(currentLang);
+            renderCountries();
+        }
+
+        function setLang(l) {
+            document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('country-search').placeholder = dict[l].search_placeholder;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[l][key]) {
+                    if (el.tagName === 'INPUT') el.placeholder = dict[l][key];
+                    else el.innerText = dict[l][key];
+                }
+            });
+        }
+
+        function initParticles() {
+            const container = document.getElementById('particles');
+            for(let i=0; i<40; i++) {
+                let p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.width = Math.random() * 4 + 1 + 'px';
+                p.style.height = p.style.width;
+                p.style.animationDuration = Math.random() * 3 + 3 + 's';
+                p.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(p);
+            }
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById(view + '-view').classList.add('active');
+            if(view === 'register') generateCaptcha();
+        }
+
+        function togglePass(id, icon) {
+            let input = document.getElementById(id);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = "password";
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function openCountryModal(target) {
+            targetPhoneField = target;
+            document.getElementById('modal-overlay').style.display = 'block';
+            document.getElementById('country-modal').classList.add('open');
+            document.getElementById('country-search').value = '';
+            filterCountries();
+        }
+
+        function closeCountryModal() {
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('country-modal').classList.remove('open');
+        }
+
+        function renderCountries() {
+            let html = '';
+            countriesData.forEach(c => {
+                let name = currentLang === 'ar' ? c.ar : c.en;
+                html += `
+                <div class="c-item" data-nameen="${c.en.toLowerCase()}" data-namear="${c.ar}" onclick="selectCountry('${c.flag}', '${c.code}')">
+                    <div style="display:flex; gap:15px;"><span style="font-size:20px;">${c.flag}</span> <span>${name}</span></div>
+                    <div style="color:var(--cyan); font-weight:bold; direction:ltr;">${c.code}</div>
+                </div>`;
+            });
+            document.getElementById('countries-list').innerHTML = html;
+        }
+
+        function filterCountries() {
+            let val = document.getElementById('country-search').value.toLowerCase();
+            document.querySelectorAll('.c-item').forEach(el => {
+                let nameEn = el.getAttribute('data-nameen');
+                let nameAr = el.getAttribute('data-namear');
+                if (nameEn.includes(val) || nameAr.includes(val)) {
+                    el.style.display = 'flex';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+        }
+
+        function selectCountry(flag, code) {
+            if(targetPhoneField === 'login') {
+                document.getElementById('login-flag').innerText = flag;
+                document.getElementById('login-code').innerText = code;
+            } else {
+                document.getElementById('reg-flag').innerText = flag;
+                document.getElementById('reg-code').innerText = code;
+            }
+            closeCountryModal();
+        }
+
+        function generateCaptcha() {
+            currentCaptcha = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('captcha-code').innerText = currentCaptcha;
+        }
+
+        function checkReferralUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref');
+            let refInput = document.getElementById('reg-ref');
+            if (ref) {
+                refInput.value = ref;
+                refInput.setAttribute('readonly', true);
+                refInput.style.opacity = '0.7';
+            }
+        }
+
+        async function executeRegister() {
+            let name = document.getElementById('reg-name').value;
+            let code = document.getElementById('reg-code').innerText;
+            let phone = document.getElementById('reg-phone').value;
+            let pass = document.getElementById('reg-pass').value;
+            let pass2 = document.getElementById('reg-pass2').value;
+            let captcha = document.getElementById('reg-captcha').value;
+            let refCode = document.getElementById('reg-ref').value;
+
+            if(!name || !phone || !pass) return alert(currentLang==='ar' ? "يرجى ملء جميع الحقول" : "Please fill all fields");
+            if(pass !== pass2) return alert(currentLang==='ar' ? "كلمتا المرور غير متطابقتين" : "Passwords do not match");
+            if(captcha !== currentCaptcha) return alert(currentLang==='ar' ? "رمز التحقق خاطئ" : "Invalid Captcha");
+
+            let fullPhone = code + phone;
+            let uniqueEmail = fullPhone.replace('+', '') + "@universal.com"; 
+            let newRefCode = "REF" + Math.floor(10000 + Math.random() * 90000); 
+
+            const { data, error } = await supabaseClient.from('users').insert([{
+                email: uniqueEmail, 
+                password: pass,
+                phone: fullPhone,
+                ref_code: newRefCode,
+                referred_by: refCode || null
+            }]).select();
+
+            if (error) {
+                if(error.code === '23505') alert(currentLang==='ar' ? "هذا الرقم مسجل مسبقاً!" : "Phone number already registered!");
+                else alert("Error: " + error.message);
+                return;
+            }
+
+            localStorage.setItem('universal_user_id', data[0].id);
+            successSound.play().catch(()=>{});
+            document.getElementById('popup-success').style.display = 'flex';
+        }
+
+        function goToDashboard() {
+            window.location.href = "dashboard.html";
+        }
+
+        async function executeLogin() {
+            let code = document.getElementById('login-code').innerText;
+            let phone = document.getElementById('login-phone').value;
+            let pass = document.getElementById('login-pass').value;
+
+            if(!phone || !pass) return alert(currentLang==='ar' ? "أدخل الرقم وكلمة المرور" : "Enter phone and password");
+
+            let fullPhone = code + phone;
+
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('*')
+                .eq('phone', fullPhone)
+                .eq('password', pass)
+                .single();
+
+            if (error || !data) {
+                alert(currentLang==='ar' ? "رقم الهاتف أو كلمة المرور خاطئة" : "Invalid phone or password");
+                return;
+            }
+
+            if(data.status === 'banned') {
+                alert(currentLang==='ar' ? "حسابك محظور من قبل الإدارة" : "Your account is banned");
+                return;
+            }
+
+            localStorage.setItem('universal_user_id', data.id);
+            window.location.href = "dashboard.html";
+        }
+    </script>
+</body>
+</html>

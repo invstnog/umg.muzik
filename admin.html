@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الإدارة - Universal Wealth</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --cyan:#00e5ff; --success:#00ff88; --danger:#ff3366; --purple: #9d00ff; --gold: #ffd700; }
+        body { margin:0; font-family:'Cairo', sans-serif; background:#080a12; color:white; overflow-x: hidden; }
+        
+        #login-section { height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top, rgba(157, 0, 255, 0.15), transparent 60%), #080a12; }
+        .login-box { background: #141625; padding: 40px; border-radius: 20px; width: 100%; max-width: 400px; border: 1px solid rgba(0, 229, 255, 0.3); box-shadow: 0 0 40px rgba(0, 229, 255, 0.1); text-align: center; }
+        .login-box h2 { color: var(--gold); font-weight: 900; letter-spacing: 2px; margin-bottom: 10px; }
+        .login-box p { color: #aaa; font-size: 14px; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; text-align: right; }
+        .input-group label { display: block; color: var(--cyan); margin-bottom: 8px; font-size: 13px; font-weight: bold; }
+        .login-input { width: 100%; padding: 15px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 10px; font-family: 'Cairo'; outline: none; transition: 0.3s; box-sizing: border-box;}
+        .login-input:focus { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); }
+        .btn-login { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--purple), var(--cyan)); border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(157, 0, 255, 0.3); font-family: 'Cairo';}
+        .btn-login:hover { transform: translateY(-2px); }
+
+        #admin-section { display: none; min-height: 100vh; }
+        .sidebar { width: 260px; background: #1a1d2e; height: 100vh; position: fixed; right: 0; top: 0; border-left: 1px solid rgba(255,255,255,0.1); overflow-y: auto; z-index: 100;}
+        .main { margin-right: 260px; padding: 30px; width: calc(100% - 260px); box-sizing: border-box; }
+        
+        .sidebar-logo { text-align: center; padding: 30px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-logo h2 { color: var(--gold); margin: 0; font-weight: 900; letter-spacing: 1px; }
+        .sidebar-logo p { margin: 5px 0 0; color: #888; font-size: 12px; }
+        
+        .menu-item { padding: 18px 25px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.02); display: flex; align-items: center; gap: 15px; color: #ccc; transition: 0.2s; font-weight: bold; }
+        .menu-item i { width: 20px; text-align: center; font-size: 18px; }
+        .menu-item:hover { background: rgba(0, 229, 255, 0.05); color: white; }
+        .menu-item.active { background: linear-gradient(90deg, rgba(0, 229, 255, 0.1), transparent); color: var(--cyan); border-right: 4px solid var(--cyan); }
+        .menu-logout { color: var(--danger); margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); }
+        .menu-logout:hover { background: rgba(255, 51, 102, 0.1); color: var(--danger); }
+
+        .card { background: #141625; padding: 25px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card h3 { margin-top: 0; color: white; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; background: #1a1d2e; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+        th { background: rgba(0,229,255,0.05); color: var(--cyan); font-weight: bold; text-transform: uppercase; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        
+        button { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 2px; transition: 0.2s; font-family: 'Cairo'; font-size: 12px; }
+        button:hover { opacity: 0.8; transform: scale(1.05); }
+        .btn-green { background: var(--success); color: black; box-shadow: 0 0 10px rgba(0, 255, 136, 0.2); }
+        .btn-red { background: var(--danger); color: white; box-shadow: 0 0 10px rgba(255, 51, 102, 0.2); }
+        .btn-blue { background: var(--cyan); color: black; box-shadow: 0 0 10px rgba(0, 229, 255, 0.2); }
+        .btn-purple { background: var(--purple); color: white; box-shadow: 0 0 10px rgba(157, 0, 255, 0.2); }
+        .btn-dark { background: #333; color: white; }
+        
+        .search-bar { padding: 12px 20px; width: 100%; max-width: 400px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 30px; margin-bottom: 20px; outline: none; font-family: 'Cairo'; }
+        .search-bar:focus { border-color: var(--cyan); }
+
+        .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; justify-content:center; align-items:center;}
+        .modal-content { background:#1a1d2e; padding:25px; border-radius:20px; text-align:center; max-width:600px; width:90%; border:1px solid var(--purple); box-shadow: 0 0 50px rgba(157,0,255,0.2);}
+        
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .status-pending { background: rgba(0, 229, 255, 0.1); color: var(--cyan); border: 1px solid var(--cyan); }
+        .status-approved { background: rgba(0, 255, 136, 0.1); color: var(--success); border: 1px solid var(--success); }
+        .status-rejected { background: rgba(255, 51, 102, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        
+        select.login-input option { background: #141625; color: white; }
+        
+        .profit-table-info { margin-bottom: 15px; border: 1px dashed var(--gold); padding: 10px; border-radius: 10px; color: #ccc; font-size: 12px; }
+        .profit-table-info span { color: var(--success); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="login-section">
+    <div class="login-box">
+        <i class="fas fa-user-shield" style="font-size: 50px; color: var(--gold); margin-bottom: 15px;"></i>
+        <h2>UMG CONTROL</h2>
+        <p>الوصول مسموح للمدير فقط</p>
+        
+        <div class="input-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="admin-email" class="login-input" placeholder="أدخل إيميل الإدارة..." autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="admin-pass" class="login-input" placeholder="أدخل كلمة المرور...">
+        </div>
+        
+        <button class="btn-login" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</button>
+    </div>
+</div>
+
+<div id="admin-section">
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <h2>UNIVERSAL</h2>
+            <p>Wealth Management</p>
+        </div>
+        <div class="menu-item active" onclick="switchTab('users')"><i class="fas fa-users"></i> إدارة الأعضاء</div>
+        <div class="menu-item" onclick="switchTab('deposits')"><i class="fas fa-file-invoice-dollar"></i> طلبات الإيداع (شحن)</div>
+        <div class="menu-item" onclick="switchTab('withdraws')"><i class="fas fa-money-bill-wave"></i> طلبات السحب</div>
+        <div class="menu-item" onclick="switchTab('games')"><i class="fas fa-dice"></i> إدارة الألعاب والجوائز</div>
+        <div class="menu-item menu-logout" onclick="doLogout()"><i class="fas fa-power-off"></i> تسجيل الخروج</div>
+    </div>
+
+    <div class="main">
+        
+        <div id="tab-users" class="card">
+            <h3><i class="fas fa-users" style="color:var(--cyan)"></i> الأعضاء (البحث والحظر)</h3>
+            <input type="text" id="search-user" class="search-bar" placeholder="ابحث بالايميل أو رمز الإحالة..." onkeyup="fetchUsers()">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead><tr><th>الإيميل</th><th>الهاتف</th><th>كلمة السر</th><th>الخطة</th><th>الرصيد الكلي ($)</th><th>رأس المال المقفل ($)</th><th>السحب المتاح ($)</th><th>رمز الإحالة</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                    <tbody id="users-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-deposits" class="card" style="display:none;">
+            <h3><i class="fas fa-file-invoice-dollar" style="color:var(--cyan)"></i> طلبات الشحن والإيداع</h3>
+            <div class="profit-table-info">
+                نظام الأرباح الجديد "باقة الصديق": <br>
+                عند الموافقة، يتم ترقية العضو، ويحصل الداعي (Referrer) على مكافأة فورية: <br>
+                مثال: V1 = الداعي يربح <span>$1.5 كاش + $0.5 رصيد مهام</span>.<br>
+                العضو يحصل على "مكافأة إيداع" خاصة به تضاف لرصيده.
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead><tr><th>إيميل العضو</th><th>المبلغ ($)</th><th>البنك المودع إليه</th><th>صورة الإيصال</th><th>تاريخ الطلب</th><th>الحالة</th><th>إجراءات الإدارة</th></tr></thead>
+                    <tbody id="deposit-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-withdraws" class="card" style="display:none;">
+            <h3><i class="fas fa-money-bill-wave" style="color:var(--cyan)"></i> طلبات السحب</h3>
+            <p style="color:#aaa; font-size:12px; margin-bottom:20px;">ملاحظة: الموافقة تعني أنك قمت بتحويل المبلغ له، وسيتم خصم المبلغ من (أرباح المهام والإحالات والمكافآت) فقط وليس من رأس ماله.</p>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead><tr><th>إيميل العضو</th><th>المبلغ المطلوب ($)</th><th>بيانات محفظة العضو</th><th>تاريخ الطلب</th><th>الحالة</th><th>إجراءات الإدارة</th></tr></thead>
+                    <tbody id="withdraw-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-games" class="card" style="display:none;">
+            <h3><i class="fas fa-dice" style="color:var(--cyan)"></i> إدارة عجلة الحظ (الجوائز واللفات)</h3>
+            <p style="color:#aaa; font-size:12px; margin-bottom:20px;">هنا يمكنك منح المستخدمين لفات مجانية وتحديد ما سيربحونه في اللفة القادمة إجبارياً.</p>
+            
+            <input type="text" id="search-game-user" class="search-bar" placeholder="ابحث عن العضو..." onkeyup="fetchGameUsers()">
+            
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الإيميل</th>
+                            <th>عدد اللفات المتاحة</th>
+                            <th>النتيجة الإجبارية القادمة</th>
+                            <th>إضافة لفات</th>
+                            <th>تحديد النتيجة (الغش)</th>
+                            <th>حفظ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="games-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal" id="image-modal">
+    <div class="modal-content">
+        <h3 style="color: white; margin-top:0; border-bottom: 1px solid #333; padding-bottom:15px;"><i class="fas fa-image" style="color:var(--cyan)"></i> صورة الإيصال المرفقة</h3>
+        <img id="modal-img" src="" style="width:100%; border-radius:10px; margin-bottom:15px; max-height: 60vh; object-fit: contain; background: #000;">
+        <button class="btn-red" onclick="document.getElementById('image-modal').style.display='none'" style="width: 100%; padding: 15px; font-size:16px;"><i class="fas fa-times"></i> إغلاق الصورة</button>
+    </div>
+</div>
+
+<script>
+    const supabaseUrl = 'https://fqluvkrpouuwfsofqnpc.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxbHV2a3Jwb3V1d2Zzb2ZxbnBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyNzM4MTEsImV4cCI6MjA4NTg0OTgxMX0.S4M2baG_01cCAObJ8o4WNLhnGAEdTT1z4PGUP__9XFU';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // تعريف الخطط ونسب الأرباح الجديدة (للعضو وللداعي)
+    const PLANS_CONFIG = {
+        10:   { name: "VIP 1", depositBonus: 2,   refCash: 1.5, refTask: 0.5 },
+        25:   { name: "VIP 2", depositBonus: 5,   refCash: 3.5, refTask: 1.0 },
+        50:   { name: "VIP 3", depositBonus: 10,  refCash: 7.0, refTask: 2.0 },
+        100:  { name: "VIP 4", depositBonus: 20,  refCash: 15.0, refTask: 5.0 },
+        200:  { name: "VIP 5", depositBonus: 40,  refCash: 30.0, refTask: 10.0 },
+        400:  { name: "VIP 6", depositBonus: 80,  refCash: 60.0, refTask: 20.0 },
+        800:  { name: "VIP 7", depositBonus: 160, refCash: 120.0, refTask: 40.0 },
+        1500: { name: "VIP 8", depositBonus: 300, refCash: 250.0, refTask: 50.0 },
+        3000: { name: "VIP 9", depositBonus: 600, refCash: 500.0, refTask: 100.0 }
+    };
+
+    function checkLoginStatus() {
+        if(sessionStorage.getItem('admin_logged_in') === 'true') {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('admin-section').style.display = 'block';
+            fetchUsers();
+        } else {
+            document.getElementById('login-section').style.display = 'flex';
+            document.getElementById('admin-section').style.display = 'none';
+        }
+    }
+
+    function doLogin() {
+        let email = document.getElementById('admin-email').value;
+        let pass = document.getElementById('admin-pass').value;
+        if(email === "rsolwsimsmair12@gmail.com" && pass === "Rusulrsol9@") {
+            sessionStorage.setItem('admin_logged_in', 'true');
+            checkLoginStatus();
+        } else {
+            alert("خطأ: بيانات الدخول غير صحيحة!");
+        }
+    }
+
+    function doLogout() {
+        if(confirm("هل تريد تسجيل الخروج من لوحة التحكم؟")) {
+            sessionStorage.removeItem('admin_logged_in');
+            window.location.reload();
+        }
+    }
+
+    function switchTab(tab) {
+        document.getElementById('tab-users').style.display = 'none';
+        document.getElementById('tab-deposits').style.display = 'none';
+        document.getElementById('tab-withdraws').style.display = 'none';
+        document.getElementById('tab-games').style.display = 'none';
+        
+        document.querySelectorAll('.menu-item').forEach(e => e.classList.remove('active'));
+        document.getElementById('tab-'+tab).style.display = 'block';
+        event.currentTarget.classList.add('active');
+        
+        if(tab==='users') fetchUsers();
+        if(tab==='deposits') fetchTransactions('deposit');
+        if(tab==='withdraws') fetchTransactions('withdraw');
+        if(tab==='games') fetchGameUsers();
+    }
+
+    async function fetchUsers() {
+        let search = document.getElementById('search-user').value;
+        let query = supabaseClient.from('users').select('*').order('created_at', {ascending: false});
+        if(search) query = query.ilike('email', `%${search}%`);
+        
+        const { data, error } = await query;
+        let html = '';
+        if(data) {
+            data.forEach(u => {
+                let isBanned = u.status === 'banned';
+                let statusBadge = isBanned ? '<span class="status-badge status-rejected">محظور</span>' : '<span class="status-badge status-approved">نشط</span>';
+                let btn = isBanned 
+                    ? `<button class="btn-green" onclick="toggleBan('${u.id}', 'active')"><i class="fas fa-unlock"></i> فك الحظر</button>` 
+                    : `<button class="btn-red" onclick="toggleBan('${u.id}', 'banned')"><i class="fas fa-ban"></i> طرد وحظر</button>`;
+                
+                let withdrawable = parseFloat(u.wallet_tasks||0) + parseFloat(u.wallet_rewards||0) + parseFloat(u.wallet_ref||0);
+
+                html += `<tr>
+                    <td style="font-weight:bold; color:var(--cyan)">${u.email}</td>
+                    <td>${u.phone || '-'}</td>
+                    <td style="color:var(--gold); font-family:monospace;">${u.password}</td>
+                    <td><span style="background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:5px;">${u.plan}</span></td>
+                    <td style="color:white; font-weight:bold;">$${parseFloat(u.wallet_total||0).toFixed(2)}</td>
+                    <td style="color:#ff4444; font-weight:bold;">$${parseFloat(u.locked_capital||0).toFixed(2)}</td>
+                    <td style="color:var(--success); font-weight:bold;">$${withdrawable.toFixed(2)}</td>
+                    <td style="font-family:monospace;">${u.ref_code}</td>
+                    <td>${statusBadge}</td>
+                    <td>${btn}</td>
+                </tr>`;
+            });
+        } else {
+            html = `<tr><td colspan="10" style="color:#888;">جاري التحميل أو لا يوجد أعضاء...</td></tr>`;
+        }
+        document.getElementById('users-tbody').innerHTML = html;
+    }
+
+    async function toggleBan(id, newStatus) {
+        if(confirm(newStatus === 'banned' ? "هل أنت متأكد من حظر هذا المستخدم؟" : "هل تريد فك الحظر؟")) {
+            await supabaseClient.from('users').update({status: newStatus}).eq('id', id);
+            fetchUsers();
+        }
+    }
+
+    // --- GAME MANAGEMENT SECTION ---
+    async function fetchGameUsers() {
+        let search = document.getElementById('search-game-user').value;
+        let query = supabaseClient.from('users').select('id, email, spins_balance, forced_prize_index').order('created_at', {ascending: false});
+        if(search) query = query.ilike('email', `%${search}%`);
+        
+        const { data, error } = await query;
+        let html = '';
+        if(data) {
+            data.forEach(u => {
+                let currentForce = u.forced_prize_index;
+                let forceText = (currentForce === -1 || currentForce === null) ? "عشوائي (حظ)" : getPrizeName(currentForce);
+                
+                html += `<tr>
+                    <td style="color:var(--cyan)">${u.email}</td>
+                    <td style="font-weight:bold; font-size:16px;">${u.spins_balance || 0}</td>
+                    <td style="color:var(--purple); font-weight:bold;">${forceText}</td>
+                    <td>
+                        <input type="number" id="spins-${u.id}" class="login-input" style="width:80px; padding:5px; text-align:center;" placeholder="0">
+                        <button class="btn-green" onclick="addSpins('${u.id}', '${u.spins_balance}')">+</button>
+                    </td>
+                    <td>
+                        <select id="prize-${u.id}" class="login-input" style="padding:5px;">
+                            <option value="-1">عشوائي (إلغاء الغش)</option>
+                            <option value="0">$1 كاش</option>
+                            <option value="1">$25 كاش</option>
+                            <option value="2">حظ أوفر (خسارة)</option>
+                            <option value="3">$60 كاش</option>
+                            <option value="4">$90 كاش</option>
+                            <option value="5">$10 كاش</option>
+                            <option value="6">$100 كاش</option>
+                            <option value="7">$150 كاش</option>
+                        </select>
+                    </td>
+                    <td><button class="btn-purple" onclick="saveGameSettings('${u.id}')"><i class="fas fa-save"></i> حفظ التعديلات</button></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('games-tbody').innerHTML = html;
+    }
+
+    function getPrizeName(idx) {
+        const names = {0:"$1", 1:"$25", 2:"خسارة", 3:"$60", 4:"$90", 5:"$10", 6:"$100", 7:"$150"};
+        return names[idx] || "غير معروف";
+    }
+
+    async function addSpins(userId, current) {
+        let addVal = parseInt(document.getElementById(`spins-${userId}`).value);
+        if(!addVal || addVal < 1) return alert("أدخل رقم صحيح");
+        let newBal = parseInt(current || 0) + addVal;
+        await supabaseClient.from('users').update({ spins_balance: newBal }).eq('id', userId);
+        alert("تم إضافة المحاولات بنجاح!");
+        fetchGameUsers();
+    }
+
+    async function saveGameSettings(userId) {
+        let selectedPrize = parseInt(document.getElementById(`prize-${userId}`).value);
+        let updateObj = { forced_prize_index: selectedPrize };
+        await supabaseClient.from('users').update(updateObj).eq('id', userId);
+        alert("تم حفظ إعدادات النتيجة الإجبارية!");
+        fetchGameUsers();
+    }
+
+    // --- TRANSACTIONS SECTION ---
+
+    async function fetchTransactions(type) {
+        document.getElementById(type+'-tbody').innerHTML = `<tr><td colspan="7" style="color:#888;">جاري تحميل الطلبات...</td></tr>`;
+        
+        // التحديث السحري للسرعة: لا نطلب صورة الإيصال مع القائمة الرئيسية، لتخفيف الضغط على الشبكة
+        const { data, error } = await supabaseClient.from('transactions')
+            .select(`id, user_id, type, amount, status, bank_details, created_at, users (email, referred_by)`)
+            .eq('type', type)
+            .order('created_at', {ascending: false});
+        
+        let html = '';
+        if(data && data.length > 0) {
+            data.forEach(t => {
+                let userEmail = t.users ? t.users.email : '<span style="color:red">مستخدم محذوف</span>';
+                let referredBy = t.users ? t.users.referred_by : null;
+                let dateStr = new Date(t.created_at).toLocaleString();
+                
+                let statusBadge = '';
+                if(t.status === 'pending') statusBadge = '<span class="status-badge status-pending"><i class="fas fa-clock"></i> قيد المراجعة</span>';
+                else if(t.status === 'approved') statusBadge = '<span class="status-badge status-approved"><i class="fas fa-check"></i> مكتمل</span>';
+                else statusBadge = '<span class="status-badge status-rejected"><i class="fas fa-times"></i> مرفوض</span>';
+
+                if(type === 'deposit') {
+                    // الزر يقوم بجلب الصورة عند النقر فقط
+                    let imgBtn = `<button class="btn-blue" onclick="showImageById('${t.id}')"><i class="fas fa-image"></i> عرض الإيصال</button>`;
+                    
+                    let actions = '';
+                    if(t.status === 'pending') {
+                        actions = `<button class="btn-green" onclick="approveDeposit('${t.id}', '${t.user_id}', ${t.amount}, '${referredBy}')"><i class="fas fa-check"></i> موافقة (ترقية + بونص)</button> 
+                                   <button class="btn-red" onclick="rejectTx('${t.id}')"><i class="fas fa-times"></i> رفض</button>`;
+                    }
+                    actions += ` <button class="btn-dark" onclick="deleteTx('${t.id}')" title="حذف نهائي للتنظيف"><i class="fas fa-trash"></i> مسح</button>`;
+
+                    html += `<tr>
+                        <td style="font-weight:bold;">${userEmail}</td>
+                        <td style="color:var(--success); font-weight:bold; font-size:16px;">$${parseFloat(t.amount).toFixed(2)}</td>
+                        <td>${t.bank_details || '-'}</td>
+                        <td>${imgBtn}</td>
+                        <td style="direction:ltr; font-size:11px; color:#aaa;">${dateStr}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actions}</td>
+                    </tr>`;
+                } else {
+                    let actions = '';
+                    if(t.status === 'pending') {
+                        actions = `<button class="btn-green" onclick="approveWithdraw('${t.id}', '${t.user_id}', ${t.amount})"><i class="fas fa-check"></i> تم الدفع</button> 
+                                   <button class="btn-red" onclick="rejectTx('${t.id}')"><i class="fas fa-times"></i> رفض</button>`;
+                    }
+                    actions += ` <button class="btn-dark" onclick="deleteTx('${t.id}')" title="حذف نهائي للتنظيف"><i class="fas fa-trash"></i> مسح</button>`;
+
+                    html += `<tr>
+                        <td style="font-weight:bold;">${userEmail}</td>
+                        <td style="color:var(--danger); font-weight:bold; font-size:16px;">$${parseFloat(t.amount).toFixed(2)}</td>
+                        <td style="color:var(--cyan)">${t.bank_details || '-'}</td>
+                        <td style="direction:ltr; font-size:11px; color:#aaa;">${dateStr}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actions}</td>
+                    </tr>`;
+                }
+            });
+        } else {
+            html = `<tr><td colspan="7" style="color:#888; padding:30px;">لا توجد طلبات في هذا القسم حالياً.</td></tr>`;
+        }
+        document.getElementById(type+'-tbody').innerHTML = html;
+    }
+
+    // جلب صورة الإيصال فقط عند الطلب لتسريع اللوحة
+    async function showImageById(txId) {
+        let imgTag = document.getElementById('modal-img');
+        imgTag.src = '';
+        imgTag.alt = 'جاري تحميل الصورة... يرجى الانتظار';
+        document.getElementById('image-modal').style.display = 'flex';
+
+        const { data, error } = await supabaseClient.from('transactions').select('receipt_base64').eq('id', txId).single();
+        if(data && data.receipt_base64) {
+            imgTag.src = data.receipt_base64;
+        } else {
+            alert("عذراً، لم يتم إرفاق صورة مع هذا الطلب!");
+            document.getElementById('image-modal').style.display = 'none';
+        }
+    }
+
+    async function approveDeposit(txId, userId, amount, referredBy) {
+        let planInfo = PLANS_CONFIG[amount];
+        if (!planInfo) {
+            if(!confirm(`المبلغ ($${amount}) لا يطابق سعر أي باقة رسمية. سيتم إضافته كرصيد فقط بدون ترقية أو عمولات إحالة. هل أنت موافق؟`)) return;
+            
+            const { data: userRaw } = await supabaseClient.from('users').select('*').eq('id', userId).single();
+            if(userRaw) {
+                let newLocked = parseFloat(userRaw.locked_capital || 0) + amount;
+                let newTotal = parseFloat(userRaw.wallet_total || 0) + amount;
+                await supabaseClient.from('users').update({ locked_capital: newLocked, wallet_total: newTotal }).eq('id', userId);
+                await supabaseClient.from('transactions').update({status: 'approved'}).eq('id', txId);
+                fetchTransactions('deposit');
+                alert("تم إضافة الرصيد.");
+            }
+            return;
+        }
+
+        if(!confirm(`الموافقة على تفعيل باقة ${planInfo.name}؟\n\n- سيتم إضافة بونص للمستخدم: $${planInfo.depositBonus}\n- سيحصل الداعي (إن وجد) على: $${planInfo.refCash} كاش + $${planInfo.refTask} رصيد مهام.`)) return;
+        
+        const { data: userData } = await supabaseClient.from('users').select('*').eq('id', userId).single();
+        if(userData) {
+            let depositBonus = planInfo.depositBonus;
+            let totalToAdd = amount + depositBonus;
+
+            let newLocked = parseFloat(userData.locked_capital || 0) + amount;
+            let newRewards = parseFloat(userData.wallet_rewards || 0) + depositBonus;
+            let newTotal = parseFloat(userData.wallet_total || 0) + totalToAdd;
+
+            let planLevels = {"V0":0, "VIP 1":1, "VIP 2":2, "VIP 3":3, "VIP 4":4, "VIP 5":5, "VIP 6":6, "VIP 7":7, "VIP 8":8, "VIP 9":9};
+            let currentLevel = planLevels[userData.plan] || 0;
+            let newLevel = planLevels[planInfo.name] || 0;
+            
+            let finalPlan = (newLevel > currentLevel) ? planInfo.name : userData.plan;
+            let newCredit = (newLevel > currentLevel) ? 100 : userData.credit;
+
+            await supabaseClient.from('users').update({ 
+                locked_capital: newLocked, 
+                wallet_rewards: newRewards, 
+                wallet_total: newTotal, 
+                plan: finalPlan,
+                credit: newCredit 
+            }).eq('id', userId);
+        }
+
+        if(referredBy && referredBy !== 'null' && referredBy !== 'undefined') {
+            const { data: referrer } = await supabaseClient.from('users').select('*').eq('ref_code', referredBy).single();
+            if(referrer) {
+                let cashBonus = planInfo.refCash;
+                let taskBonus = planInfo.refTask; 
+
+                let newRefWallet = parseFloat(referrer.wallet_ref || 0) + cashBonus;
+                let newTaskWallet = parseFloat(referrer.wallet_tasks || 0) + taskBonus;
+                let newTotalRef = parseFloat(referrer.wallet_total || 0) + cashBonus + taskBonus;
+
+                await supabaseClient.from('users').update({ 
+                    wallet_ref: newRefWallet,
+                    wallet_tasks: newTaskWallet,
+                    wallet_total: newTotalRef
+                }).eq('id', referrer.id);
+            }
+        }
+
+        await supabaseClient.from('transactions').update({status: 'approved'}).eq('id', txId);
+        fetchTransactions('deposit');
+        alert("تمت الموافقة وتوزيع المكافآت بنجاح!");
+    }
+
+    async function approveWithdraw(txId, userId, amount) {
+        if(!confirm(`تأكيد؟ سيتم خصم مبلغ $${amount} من أرباح المستخدم القابلة للسحب.`)) return;
+        
+        const { data: userData } = await supabaseClient.from('users').select('*').eq('id', userId).single();
+        if(userData) {
+            let remainingDeduct = amount;
+            let wRef = parseFloat(userData.wallet_ref||0);
+            let wTasks = parseFloat(userData.wallet_tasks||0);
+            let wRewards = parseFloat(userData.wallet_rewards||0);
+
+            let withdrawableTotal = wRef + wTasks + wRewards;
+            
+            if(withdrawableTotal < amount) {
+                alert("خطأ: رصيد الأرباح القابل للسحب أقل من المبلغ المطلوب!");
+                return;
+            }
+
+            if(wRef >= remainingDeduct) { wRef -= remainingDeduct; remainingDeduct = 0; }
+            else { remainingDeduct -= wRef; wRef = 0; }
+
+            if(remainingDeduct > 0 && wTasks >= remainingDeduct) { wTasks -= remainingDeduct; remainingDeduct = 0; }
+            else if (remainingDeduct > 0) { remainingDeduct -= wTasks; wTasks = 0; }
+
+            if(remainingDeduct > 0 && wRewards >= remainingDeduct) { wRewards -= remainingDeduct; remainingDeduct = 0; }
+            
+            let newTotal = parseFloat(userData.wallet_total||0) - amount;
+
+            await supabaseClient.from('users').update({ wallet_ref: wRef, wallet_tasks: wTasks, wallet_rewards: wRewards, wallet_total: newTotal }).eq('id', userId);
+        }
+        
+        await supabaseClient.from('transactions').update({status: 'approved'}).eq('id', txId);
+        fetchTransactions('withdraw');
+    }
+
+    async function rejectTx(txId) {
+        if(confirm("هل أنت متأكد من رفض هذا الطلب؟")) {
+            await supabaseClient.from('transactions').update({status: 'rejected'}).eq('id', txId);
+            fetchTransactions('deposit'); 
+            fetchTransactions('withdraw');
+        }
+    }
+
+    async function deleteTx(txId) {
+        let adminPass = prompt("لحذف الطلب نهائياً، يرجى إدخال كلمة المرور:");
+        if (adminPass === "Rusulrsol9@") {
+            await supabaseClient.from('transactions').delete().eq('id', txId);
+            fetchTransactions('deposit'); 
+            fetchTransactions('withdraw');
+            alert("تم مسح الطلب نهائياً.");
+        } else if(adminPass !== null) {
+            alert("كلمة المرور خاطئة.");
+        }
+    }
+
+    window.onload = checkLoginStatus;
+</script>
+
+</body>
+</html>
