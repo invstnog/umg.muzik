@@ -1274,7 +1274,11 @@
         function contactEmma() { window.open("https://wa.me/qr/RSOSVBZLE5VPB1", "_blank"); document.getElementById('popup-agent').style.display='none'; }
         
         function initAppUpdates() {
-            document.getElementById('user-ref-link').innerText = window.location.origin + '?ref=' + appUser.ref_code;
+            // تصحيح بناء رابط الإحالة ليكون أكثر دقة
+            const baseUrl = window.location.protocol + "//" + window.location.host + window.location.pathname.replace("dashboard.html", "index.html");
+            if(appUser.ref_code) {
+                document.getElementById('user-ref-link').innerText = baseUrl + "?ref=" + appUser.ref_code;
+            }
             renderAssetBanks();
             setInterval(() => {
                 let d = new Date();
@@ -1291,7 +1295,7 @@
                 if (days <= 3) { 
                     document.getElementById('tasks-locked-view').style.display = 'none';
                     document.getElementById('tasks-active-view').style.display = 'flex';
-                    document.getElementById('training-banner').style.display = 'block'; // إظهار بانر التدريب
+                    document.getElementById('training-banner').style.display = 'block'; 
                     appUser.tasksTotal = 3;
                     updateTaskDisplay();
                 } else {
@@ -1301,7 +1305,7 @@
             } else { 
                 document.getElementById('tasks-locked-view').style.display = 'none'; 
                 document.getElementById('tasks-active-view').style.display = 'flex'; 
-                document.getElementById('training-banner').style.display = 'none'; // إخفاء الشرح للـ VIP
+                document.getElementById('training-banner').style.display = 'none'; 
                 updateTaskDisplay(); 
             }
         }
@@ -1315,7 +1319,6 @@
                 document.getElementById('task-song-name').innerText = "تم إكمال جميع المهام"; 
                 document.getElementById('btn-play-task').style.display = 'none'; 
             } else { 
-                // تغيير الأغاني بناءً على اليوم ورقم المهمة ليحصل العضو على تنوع
                 let todayBase = Math.floor(Date.now() / 86400000);
                 let currentSinger = taskSingers[(todayBase + appUser.tasksDone) % taskSingers.length];
                 
@@ -1334,7 +1337,6 @@
             let url = taskSingers[(todayBase + appUser.tasksDone) % taskSingers.length].audio; 
             taskAudioObj = new Audio(url); 
             
-            // معالجة الأخطاء لكي لا يتوقف البرنامج إذا لم يعمل الصوت
             let playPromise = taskAudioObj.play();
             
             let startVisuals = () => {
@@ -1358,7 +1360,6 @@
                 playPromise.then(_ => {
                     startVisuals();
                 }).catch(error => {
-                    // إذا منع المتصفح الصوت، قم بتشغيل شريط التقدم على أي حال
                     console.log("تم منع الصوت التلقائي، جاري تشغيل المهمة صامتاً.");
                     startVisuals();
                 });
@@ -1400,7 +1401,14 @@
 
         function closeProfitPopup() { document.getElementById('popup-profit').style.display = 'none'; }
         function executeLogout() { localStorage.removeItem('universal_user_id'); window.location.href = "index.html"; }
-        function copyRefLink() { navigator.clipboard.writeText(document.getElementById('user-ref-link').innerText); alert("تم النسخ!"); }
+        
+        // إصلاح دالة النسخ لضمان نسخ الرابط المحدث
+        function copyRefLink() { 
+            const link = document.getElementById('user-ref-link').innerText;
+            navigator.clipboard.writeText(link).then(() => {
+                alert("تم نسخ رابط الدعوة بنجاح!");
+            });
+        }
         
         function toggleAssets(tab) {
             if(tab === 'all') {
@@ -1457,7 +1465,6 @@
             }
         }
 
-        // كود تشغيل لعبة الحظ
         function playLuckyGame() {
             if(gameAttempts <= 0) {
                 alert('ليس لديك محاولات حالياً! يرجى دعوة أصدقاء أو العودة غداً.');
@@ -1472,28 +1479,25 @@
             btn.style.pointerEvents = 'none';
 
             let boxes = document.querySelectorAll('.game-prize-box:not(.game-play-btn)');
-            let prizes = [1, 25, 0, 60, 90, 10, 100, 150]; // 0 تعني حظ أوفر
+            let prizes = [1, 25, 0, 60, 90, 10, 100, 150]; 
             
-            // تأثير التحديد العشوائي
             let highlightInterval = setInterval(() => {
                 boxes.forEach(b => b.style.backgroundColor = 'rgba(255,255,255,0.05)');
                 let rand = Math.floor(Math.random() * boxes.length);
                 boxes[rand].style.backgroundColor = 'var(--purple)';
             }, 100);
 
-            // إيقاف التحديد بعد 3 ثواني وإعلان النتيجة
             setTimeout(() => {
                 clearInterval(highlightInterval);
                 boxes.forEach(b => b.style.backgroundColor = 'rgba(255,255,255,0.05)');
 
-                // نسبة الفوز (يمكنك تعديلها لاحقاً لتعطي حظ أوفر أو مبالغ صغيرة غالباً)
                 let roll = Math.random();
-                let wonIndex = 2; // افتراضي: حظ أوفر
+                let wonIndex = 2; 
                 
-                if(roll < 0.2) wonIndex = 0; // $1
-                else if(roll < 0.3) wonIndex = 5; // $10
-                else if(roll < 0.8) wonIndex = 2; // حظ أوفر
-                else wonIndex = 1; // $25 
+                if(roll < 0.2) wonIndex = 0; 
+                else if(roll < 0.3) wonIndex = 5; 
+                else if(roll < 0.8) wonIndex = 2; 
+                else wonIndex = 1; 
 
                 boxes[wonIndex].style.backgroundColor = 'var(--success)';
                 btn.innerHTML = 'العب';
@@ -1505,7 +1509,6 @@
                     appUser.wallet.total += wonAmount;
                     updateAllBalances();
                     
-                    // تحديث قاعدة البيانات إذا لزم
                     if(appUser.dbId) {
                          supabaseClient.from('users').update({ 
                              wallet_rewards: appUser.wallet.rewards, 
